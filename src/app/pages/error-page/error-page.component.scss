@@ -1,0 +1,36 @@
+.page-not-found {
+  background: linear-gradient(to right, #121212, #6b00b6); /* Fondo de degradado */
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+
+  .content {
+    text-align: center;
+
+    h1 {
+      font-size: 3em;
+    }
+
+    p {
+      font-size: 1.2em;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1em;
+      background-color: #6b00b6;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #450073;
+    }
+  }
+}
