@@ -5,7 +5,7 @@ import { DirectortecnicoDashboard } from "../app/pages/directortecnico-dashboard
 import { InspectorDashboard } from "../app/pages/inspector-dashboard/inspector-dashboard.component"
 import { LoginPage } from "../app/pages/login/login.component"
 import { ProgramadoragendaDashboard } from "../app/pages/programadoragenda-dashboard/programadoragenda-dashboard.component"
-import { RegisterPage } from "../app/pages/register/register.component"
+import { RegisterAdminPage } from "../app/pages/register-admin/register-admin.component"
 
 export const login = {
   path:"",
@@ -14,9 +14,9 @@ export const login = {
 }
 
 export const register = {
-  path:"register",
+  path:"register/admin",
   title: "Register",
-  component: RegisterPage
+  component: RegisterAdminPage
 }
 
 export const adminDashboard = {

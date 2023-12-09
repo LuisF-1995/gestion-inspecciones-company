@@ -1,0 +1,22 @@
+<mat-form-field class="full-width">
+  <mat-label>País</mat-label>
+  <input matInput
+        aria-label="Country"
+        [matAutocomplete]="auto"
+        [formControl]="countryControl"
+  >
+  <!-- [(ngModel)]="selectedCountry" -->
+  <mat-autocomplete #auto="matAutocomplete">
+    @for (country of filteredCountries | async; track country) {
+      <mat-option [value]="country.label">
+        <img alt="" class="option-img" [src]="'https://flagcdn.com/w20/'+country.code.toLowerCase()+'.png'" width="25">
+        <span>{{country.label}}</span>
+      </mat-option>
+    }
+  </mat-autocomplete>
+  <!-- @if (selectedCountry) {
+    <button matSuffix mat-icon-button aria-label="Clear" (click)="clear()">
+      <mat-icon>close</mat-icon>
+    </button>
+  } -->
+</mat-form-field>

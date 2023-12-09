@@ -1,0 +1,23 @@
+.register-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  overflow: auto;
+
+  .card {
+    min-width: 400px;
+
+    .card-header {
+      background-color: rgb(50, 10, 165);
+      color: #fff;
+      text-align: center;
+      padding: 15px;
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+  }
+}
+
