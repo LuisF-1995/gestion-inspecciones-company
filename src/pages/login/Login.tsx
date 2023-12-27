@@ -88,7 +88,7 @@ const GeneralLogin = () => {
             alignItems: 'center',
             width: 300,
             margin: 'auto',
-            backgroundColor: 'rgb(224, 226, 229)',
+            backgroundColor: 'rgb(255, 255, 255)',
             padding: 1,
             borderRadius: 4,
             boxShadow: '0px 2px 10px -1px rgb(32, 49, 137)',

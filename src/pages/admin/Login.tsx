@@ -8,10 +8,11 @@ import { adminRegisterPath } from '../../constants/routes';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import Swal from 'sweetalert2';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import CountrySelect from '../../components/CountrySelect';
 
 const AdminLogin = () => {
+  const navigate = useNavigate();
   const [waiting, setWaiting] = useState(false);
   const [countryInfo, setCountryInfo] = useState({
     code: "",
@@ -50,19 +51,53 @@ const AdminLogin = () => {
     form.preventDefault();
     setWaiting(true);
 
-    const loginResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/admin/login`, loginData);
+    try {
+      const loginResponse:{authenticationSuccess:boolean, jwtToken:string|null, userInfo:any|null, authInfo:string|null} = await sendPost(`${API_GESTION_INSPECCIONES_URL}/admin/login`, loginData);
 
-    if(loginResponse && loginResponse.authenticationSuccess && loginResponse.jwtToken && loginResponse.userInfo){
-      setWaiting(false);
-    }
-    else{
+      if(loginResponse && loginResponse.authenticationSuccess && loginResponse.jwtToken && loginResponse.userInfo){
+        setWaiting(false);
+      }
+      else if (!loginResponse.authenticationSuccess && loginResponse.userInfo){
+        setWaiting(false);
+        
+        if(loginResponse.userInfo.status == "PENDING_APROVAL"){
+          Swal.fire({
+            title: 'Pendiente aprobación',
+            text: `El usuario está pendiente de aprobación para acceder a la aplicación, favor contactarse con el administrador`,
+            icon: 'info',
+          })
+        }
+        else{
+          Swal.fire({
+            title: 'Credenciales erróneas',
+            text: `${loginResponse && loginResponse.authInfo}`,
+            icon: 'error',
+          })
+        }
+      }
+      else{
+        setWaiting(false);
+        Swal.fire({
+          title: 'Usuario no registrado',
+          text: `${loginResponse && loginResponse.authInfo}`,
+          icon: 'error',
+          confirmButtonText: "Ir a registro admin"
+        })
+        .then(option => {
+          if(option.isConfirmed){
+            navigate(`../${adminRegisterPath}`);
+          }
+        })
+      }
+    } 
+    catch (error) {
       setWaiting(false);
       Swal.fire({
-        title: 'No se puede iniciar sesión',
-        text: ``,
+        title: 'Error al comunicarse con el servidor',
+        text: `No se pudo enviar la solicitud, favor revisar su conexión a internet e intentarlo mas tarde.`,
         icon: 'error',
       })
-    }
+    }   
   };
 
   return (
@@ -74,7 +109,7 @@ const AdminLogin = () => {
             alignItems: 'center',
             width: 300,
             margin: 'auto',
-            backgroundColor: 'rgb(224, 226, 229)',
+            backgroundColor: 'rgb(255, 255, 255)',
             padding: 1,
             borderRadius: 4,
             boxShadow: '0px 2px 10px -1px rgb(32, 49, 137)',

@@ -1,23 +1,25 @@
 import React, {useState} from 'react';
-import { TextField, Button, Box, Grid, Container, InputAdornment } from '@mui/material';
+import { TextField, Button, Box, Grid, Container, InputAdornment, FormControl, InputLabel, OutlinedInput, IconButton, Popover, Typography } from '@mui/material';
 import { API_GESTION_INSPECCIONES_URL } from '../../constants/apis';
 import { sendGet, sendPost } from '../../services/apiRequests';
-import { adminRegisterPath } from '../../constants/routes';
+import { adminLoginPath, adminRegisterPath } from '../../constants/routes';
 // MATERIAL UI COMPONENTS
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import Swal from 'sweetalert2';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import CountrySelect from '../../components/CountrySelect';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 
 const AdminRegister = () => {
+  const navigate = useNavigate();
   const [waiting, setWaiting] = useState(false);
   const [countryInfo, setCountryInfo] = useState({
     code: "",
     label: "",
     phone: ""
   });
-  const [registerData, setLoginData] = useState({
+  const [registerData, setRegisterData] = useState({
     nombres: '',
     apellidos: '',
     numeroDocumento: '',
@@ -28,12 +30,64 @@ const AdminRegister = () => {
     companyName:'',
     companyId: '', //companyId es el mismo NIT
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [validatePass, setValidatePass] = useState("");
+  const [showValidatePassword, setShowValidatePassword] = useState(false);
+  const [samePass, setSamePass] = useState(false);
+  const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
+
+  const handleClickPopOver = (event: React.MouseEvent<HTMLButtonElement>) => {
+    if(!samePass){
+      setAnchorEl(event.currentTarget);
+    }
+  };
+
+  const handleClosePopOver = () => {
+    setAnchorEl(null);
+  };
+  const open = Boolean(anchorEl);
+  const id = open ? 'simple-popover' : undefined;
+
+
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
+  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+  };
+
+  const handleClickShowValidatePassword = () => setShowValidatePassword((show) => !show);
+  const handleMouseDownValidatePassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+  };
+
+  const validateSamePass = (name:string, value:string) => {
+    if(name == "validatePass"){
+      setValidatePass(value);
+      if(value == registerData.password){
+        setSamePass(true);
+      }
+      else{
+        setSamePass(false);
+      }
+    }
+    else if (name == "password"){
+      if(value == validatePass){
+        setSamePass(true);
+      }
+      else{
+        setSamePass(false);
+      }
+    }
+  }
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const name = event.target.name;
     const value = event.target.value;
 
-    setLoginData({
+    if(name == "validatePass" || name == "password"){
+      validateSamePass(name, value);
+    }
+
+    setRegisterData({
       ...registerData,
       [name]: value
     });
@@ -45,7 +99,7 @@ const AdminRegister = () => {
     phone: string
   }) => {
     setCountryInfo(countrySelected);
-    setLoginData({
+    setRegisterData({
       ...registerData,
       country: countrySelected && countrySelected.label
     })
@@ -55,20 +109,71 @@ const AdminRegister = () => {
     form.preventDefault();
     setWaiting(true);
 
-    registerData.telefono = countryInfo + registerData.telefono;
-
-    const registerResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/admin/register`, registerData);
-
-    if(registerResponse && registerResponse.response && registerResponse.status && !registerResponse.userAlreadyExists){
-      setWaiting(false);
+    if(samePass){
+      try {
+        const registerResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/admin/register`, registerData);
+    
+        if (registerResponse && registerResponse.response && registerResponse.status && !registerResponse.userAlreadyExists){
+          setWaiting(false);
+          Swal.fire({
+            title: 'Registro exitoso',
+            text: `La solicitud de registro se radicó exitosamente. Después de la revisión se enviará una respuesta al correo ${registerResponse.response.email}.`,
+            icon: 'success',
+          })
+          .then(() => {
+            setValidatePass("");
+            setCountryInfo({
+              code: "",
+              label: "",
+              phone: ""
+            });
+            setRegisterData({
+              nombres: '',
+              apellidos: '',
+              numeroDocumento: '',
+              email:'',
+              password: '',
+              country: '',
+              telefono:'',
+              companyName:'',
+              companyId: '', //companyId es el mismo NIT
+            });
+          })
+        }
+        else if (registerResponse.userAlreadyExists){
+          setWaiting(false);
+          Swal.fire({
+            title: 'El usuario ya existe',
+            text: `No se pudo registrar el usuario con documento número ${registerData.numeroDocumento}, porque ya existe.`,
+            icon: 'info',
+            confirmButtonText: "Ir al admin login"
+          })
+          .then(option => {
+            if(option.isConfirmed){
+              navigate(`../${adminLoginPath}`);
+            }
+          })
+        }
+        else{
+          setWaiting(false);
+          Swal.fire({
+            title: 'No se pudo solicitar el registro',
+            text: ``,
+            icon: 'error',
+          })
+        }
+      } 
+      catch (error) {
+        setWaiting(false);
+          Swal.fire({
+            title: 'Error de comunicación con el servidor',
+            text: ``,
+            icon: 'error',
+          })
+      }
     }
     else{
       setWaiting(false);
-      Swal.fire({
-        title: 'No se puede iniciar sesión',
-        text: ``,
-        icon: 'error',
-      })
     }
   };
 
@@ -136,17 +241,56 @@ const AdminRegister = () => {
               />
             </Grid>
             <Grid item xs={12} sm={6} md={6} lg={4} xl={4}>
-              <TextField
-                name='password'
-                label="Password"
-                variant="outlined"
-                margin="normal"
-                fullWidth
-                type="password"
-                value={registerData.password}
-                onChange={handleChange}
-                required
-              />
+              <FormControl variant="outlined" margin='normal' fullWidth required>
+                <InputLabel htmlFor="password">Password</InputLabel>
+                <OutlinedInput
+                  required
+                  name='password'
+                  id="password"
+                  label="Password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={registerData.password}
+                  onChange={handleChange}
+                  endAdornment={
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={handleClickShowPassword}
+                        onMouseDown={handleMouseDownPassword}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  }
+                />
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6} md={6} lg={4} xl={4}>
+              <FormControl variant="outlined" margin='normal' fullWidth required error={!samePass && validatePass.length > 0}>
+                <InputLabel htmlFor="validate-password">Validate password</InputLabel>
+                <OutlinedInput
+                  required
+                  name='validatePass'
+                  id="validate-password"
+                  label="Validate password"
+                  type={showValidatePassword ? 'text' : 'password'}
+                  value={validatePass}
+                  onChange={handleChange}
+                  endAdornment={
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={handleClickShowValidatePassword}
+                        onMouseDown={handleMouseDownValidatePassword}
+                        edge="end"
+                      >
+                        {showValidatePassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  }
+                />
+              </FormControl>
             </Grid>
             <Grid item xs={12} sm={6} md={6} lg={4} xl={4}>
               <CountrySelect onChange={getCountry} required={true} margin={"16px 0px 8px 0px"}/>
@@ -195,17 +339,29 @@ const AdminRegister = () => {
             </Grid>
 
             <Grid item xs={12} sm={12} md={12} lg={12} xl={12} sx={{display:"flex", alignItems:"center", justifyContent:"center"}}>
-              <Button type="submit" variant="outlined" color="primary" sx={{ mt: 2 }} size='large'>
+              <Button type="submit" variant="outlined" color="primary" sx={{ mt: 2 }} size='large' onClick={handleClickPopOver}>
                 Registrar
               </Button>
+              <Popover
+                id={id}
+                open={open}
+                anchorEl={anchorEl}
+                onClose={handleClosePopOver}
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'center',
+                }}
+              >
+                <Typography sx={{ p: 2 }}>Por favor validar la información</Typography>
+              </Popover>
             </Grid>
           </Grid>
         </form>
 
         <section className='adminSection'>
           <p>¿Ya estas registrado?</p>
-          <NavLink to={`../${adminRegisterPath}`}>
-            Ir a Login
+          <NavLink to={`../${adminLoginPath}`}>
+            Ir al admin Login
           </NavLink>
         </section>
       </Container>
