@@ -12,7 +12,7 @@ import { NavLink } from 'react-router-dom';
 
 
 const GeneralLogin = () => {
-  const [roles, setRoles] = useState([""]);
+  const [roles, setRoles] = useState(['']);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
@@ -23,11 +23,28 @@ const GeneralLogin = () => {
   }, [])
 
   const getUserRoles = async() => {
-    const rolesFromApi:string[] = await sendGet(`${API_GESTION_INSPECCIONES_URL}/user-roles`);
-    const filterClients:string[] = rolesFromApi.filter((rol:string) => rol !== "CLIENTE");
-    const filteredRoles:string[] = filterClients.filter((rol:string) => rol !== "CONSTRUCTOR");
-
-    setRoles(filteredRoles);
+    try {
+      const rolesFromApi:string[] | any = await sendGet(`${API_GESTION_INSPECCIONES_URL}/user-roles`);
+      if(rolesFromApi.data && rolesFromApi.data.length > 0){
+        const filterClients:string[] = rolesFromApi.data && rolesFromApi.data.length > 0 && rolesFromApi.data.filter((rol:string) => rol !== "CLIENTE");
+        const filteredRoles:string[] = filterClients && filterClients.length > 0 && filterClients.filter((rol:string) => rol !== "CONSTRUCTOR");
+        setRoles(filteredRoles);
+      }
+      else if (rolesFromApi.data && rolesFromApi.data.message) {
+        Swal.fire({
+          title: "Error de conexión",
+          text: `${rolesFromApi.data.message}`,
+          icon: 'error'
+        })
+      }
+    } 
+    catch (error) {
+      Swal.fire({
+        title: "Error de conexión",
+        text: `No se pudo obtener información de los roles, verificar conexión a internet o comunicate con nosotros.`,
+        icon: 'error'
+      })
+    }
   }
   
 
@@ -40,17 +57,34 @@ const GeneralLogin = () => {
       password: password
     }
 
-    const loginValidation = await validateLoginByRol(selectedRole, loginObject);
-
-    if(loginValidation && loginValidation.authenticationSuccess && loginValidation.jwtToken && loginValidation.userInfo){
-      setWaiting(false);
-    }
-    else{
-      setWaiting(false);
+    try {
+      const loginValidation = await validateLoginByRol(selectedRole, loginObject);
+  
+      if(loginValidation && loginValidation.authenticationSuccess && loginValidation.jwtToken && loginValidation.userInfo){
+        setWaiting(false);
+      }
+      else if(loginValidation && loginValidation.authInfo && !loginValidation.authenticationSuccess){
+        setWaiting(false);
+        Swal.fire({
+          title: 'No se pudo iniciar sesión',
+          text: `${loginValidation.authInfo}`,
+          icon: 'info',
+        })
+      }
+      else{
+        setWaiting(false);
+        Swal.fire({
+          title: 'No se puede iniciar sesión',
+          text: ``,
+          icon: 'error',
+        })
+      }
+    } 
+    catch (error) {
       Swal.fire({
-        title: 'No se puede iniciar sesión',
-        text: ``,
-        icon: 'error',
+        title: "Error de conexión",
+        text: `No se pudo obtener información de los roles, verificar conexión a internet o comunicate con nosotros.`,
+        icon: 'error'
       })
     }
   };
@@ -124,7 +158,7 @@ const GeneralLogin = () => {
               label="Rol"
               required
             >
-              {roles.map((role) => (
+              {roles && roles.length > 0 && roles.map((role) => (
                 <MenuItem key={role} value={role}>
                   {role && role.length > 0 ? role.replace("_", " ") : ""}
                 </MenuItem>

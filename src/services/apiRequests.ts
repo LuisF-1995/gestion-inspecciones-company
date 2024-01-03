@@ -17,8 +17,8 @@ export async function sendGet (endpoint:string, token?:string):Promise<any> {
     }
 
     try {
-        const response = await axios.get(endpoint, headers);
-        return response.data;
+        const response = await axios.get(endpoint, {headers: headers});
+        return response;
     } 
     catch (error) {
         return error;
@@ -41,7 +41,7 @@ export async function sendPost (endpoint:string, bodyData:any, token?:string):Pr
             }
         }
 
-        const response = await axios.post(endpoint, bodyData,  headers );
+        const response = await axios.post(endpoint, bodyData,  {headers: headers} );
         return response.data;
     } 
     catch (error) {
@@ -67,9 +67,9 @@ export async function sendPut (endpoint:string, dataUpdate:any, token?:string){
     }
 
     axios
-    .put(endpoint, dataUpdate, headers)
-    .then((response: { data: any; }) => {
-        return response.data;
+    .put(endpoint, dataUpdate, {headers: headers})
+    .then((response: any) => {
+        return response;
     })
     .catch((error: any) => {
         return error;
@@ -94,9 +94,9 @@ export async function sendDelete (endpoint:string, idDelete:number, token?:strin
     }
 
     axios
-    .delete(`${endpoint}/${idDelete}`, headers)
-    .then((response: { data: any; }) => {
-        return response.data;
+    .delete(`${endpoint}/${idDelete}`, {headers: headers})
+    .then((response: any) => {
+        return response;
     })
     .catch((error: any) => {
         return error;

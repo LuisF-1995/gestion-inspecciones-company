@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import { TextField, Button, Box, Grid, Container, InputAdornment, FormControl, InputLabel, OutlinedInput, IconButton, Popover, Typography } from '@mui/material';
 import { API_GESTION_INSPECCIONES_URL } from '../../constants/apis';
-import { sendGet, sendPost } from '../../services/apiRequests';
+import { sendPost } from '../../services/apiRequests';
 import { adminLoginPath, adminRegisterPath } from '../../constants/routes';
 // MATERIAL UI COMPONENTS
 import Backdrop from '@mui/material/Backdrop';

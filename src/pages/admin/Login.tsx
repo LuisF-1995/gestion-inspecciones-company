@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import './admin.styles.css';
 import { TextField, Button, Box } from '@mui/material';
 import { API_GESTION_INSPECCIONES_URL } from '../../constants/apis';
-import { sendGet, sendPost } from '../../services/apiRequests';
-import { adminRegisterPath } from '../../constants/routes';
+import { sendPost } from '../../services/apiRequests';
+import { adminDashboardPath, adminRegisterPath } from '../../constants/routes';
 // MATERIAL UI COMPONENTS
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import Swal from 'sweetalert2';
 import { NavLink, useNavigate } from 'react-router-dom';
 import CountrySelect from '../../components/CountrySelect';
+import { localTokenKeyName, localUserIdKeyName } from '../../constants/globalConstants';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -53,14 +54,15 @@ const AdminLogin = () => {
 
     try {
       const loginResponse:{authenticationSuccess:boolean, jwtToken:string|null, userInfo:any|null, authInfo:string|null} = await sendPost(`${API_GESTION_INSPECCIONES_URL}/admin/login`, loginData);
+      setWaiting(false);
 
       if(loginResponse && loginResponse.authenticationSuccess && loginResponse.jwtToken && loginResponse.userInfo){
-        setWaiting(false);
+        sessionStorage.setItem(localTokenKeyName, loginResponse.jwtToken);
+        sessionStorage.setItem(localUserIdKeyName, loginResponse.userInfo.id);
+        navigate(`../${adminDashboardPath}`);
       }
       else if (!loginResponse.authenticationSuccess && loginResponse.userInfo){
-        setWaiting(false);
-        
-        if(loginResponse.userInfo.status == "PENDING_APROVAL"){
+        if(loginResponse.userInfo.status === "PENDING_APROVAL"){
           Swal.fire({
             title: 'Pendiente aprobación',
             text: `El usuario está pendiente de aprobación para acceder a la aplicación, favor contactarse con el administrador`,
@@ -76,7 +78,6 @@ const AdminLogin = () => {
         }
       }
       else{
-        setWaiting(false);
         Swal.fire({
           title: 'Usuario no registrado',
           text: `${loginResponse && loginResponse.authInfo}`,
