@@ -1,8 +1,8 @@
 import React, {useState} from 'react';
-import { TextField, Button, Box, Grid, Container, InputAdornment, FormControl, InputLabel, OutlinedInput, IconButton, Popover, Typography } from '@mui/material';
+import { TextField, Button, Grid, Container, InputAdornment, FormControl, InputLabel, OutlinedInput, IconButton, Popover, Typography } from '@mui/material';
 import { API_GESTION_INSPECCIONES_URL } from '../../constants/apis';
 import { sendPost } from '../../services/apiRequests';
-import { adminLoginPath, adminRegisterPath } from '../../constants/routes';
+import { adminLoginPath } from '../../constants/routes';
 // MATERIAL UI COMPONENTS
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -60,9 +60,9 @@ const AdminRegister = () => {
   };
 
   const validateSamePass = (name:string, value:string) => {
-    if(name == "validatePass"){
+    if(name === "validatePass"){
       setValidatePass(value);
-      if(value == registerData.password){
+      if(value === registerData.password){
         setSamePass(true);
       }
       else{

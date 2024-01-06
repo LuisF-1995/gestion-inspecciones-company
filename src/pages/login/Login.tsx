@@ -9,6 +9,7 @@ import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import Swal from 'sweetalert2';
 import { NavLink } from 'react-router-dom';
+import { getUserRoles } from '../../services/globalFunctions';
 
 
 const GeneralLogin = () => {
@@ -19,32 +20,12 @@ const GeneralLogin = () => {
   const [waiting, setWaiting] = useState(false);
 
   useEffect(() => {
-    getUserRoles();
+    getUserRolesArray();
   }, [])
 
-  const getUserRoles = async() => {
-    try {
-      const rolesFromApi:string[] | any = await sendGet(`${API_GESTION_INSPECCIONES_URL}/user-roles`);
-      if(rolesFromApi.data && rolesFromApi.data.length > 0){
-        const filterClients:string[] = rolesFromApi.data && rolesFromApi.data.length > 0 && rolesFromApi.data.filter((rol:string) => rol !== "CLIENTE");
-        const filteredRoles:string[] = filterClients && filterClients.length > 0 && filterClients.filter((rol:string) => rol !== "CONSTRUCTOR");
-        setRoles(filteredRoles);
-      }
-      else if (rolesFromApi.data && rolesFromApi.data.message) {
-        Swal.fire({
-          title: "Error de conexión",
-          text: `${rolesFromApi.data.message}`,
-          icon: 'error'
-        })
-      }
-    } 
-    catch (error) {
-      Swal.fire({
-        title: "Error de conexión",
-        text: `No se pudo obtener información de los roles, verificar conexión a internet o comunicate con nosotros.`,
-        icon: 'error'
-      })
-    }
+  const getUserRolesArray = async() => {
+    const userRoles = await getUserRoles();
+    setRoles(userRoles);
   }
   
 
@@ -172,7 +153,7 @@ const GeneralLogin = () => {
  
         <section className='adminSection'>
           <p>¿Eres administrador?</p>
-          <NavLink to={`${adminRootPath}${adminLoginPath}`}>
+          <NavLink to={`${adminRootPath}/${adminLoginPath}`}>
             Ir al sitio
           </NavLink>
         </section>

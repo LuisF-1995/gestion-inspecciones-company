@@ -5,12 +5,20 @@ import Root from './pages/root/Root.tsx';
 import reportWebVitals from './reportWebVitals';
 
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
-import { adminDashboardPath, adminLoginPath, adminRegisterPath, adminRootPath, asesorComercialRootPath, asesorDashboardPath, dirRegionalDashboardPath, dirRegionalRootPath, dirTecnicoDashboardPath, dirTecnicoRootPath, inspectorDashboardPath, inspectorRootPath, loginPath, programadorAgendaDashboardPath, programadorAgendaRootPath } from './constants/routes.ts';
+import { adminAddUserPath, adminDashboardPath, adminLoginPath, adminProfilePath, adminRegisterPath, adminRootPath, adminPortalPath, asesorComercialRootPath, asesorDashboardPath, dirRegionalDashboardPath, dirRegionalRootPath, dirTecnicoDashboardPath, dirTecnicoRootPath, inspectorDashboardPath, inspectorRootPath, loginPath, programadorAgendaDashboardPath, programadorAgendaRootPath, adminUsersPath, adminCompetencesPath, adminAddCompetencePath, adminRegionalsPath, adminAddRegionalPath } from './constants/routes.ts';
 // COMPONENTES
 import GeneralLogin from './pages/login/Login.tsx';
 import AdminLogin from './pages/admin/Login.tsx';
 import AdminRegister from './pages/admin/Register.tsx';
+import AdminHome from './pages/admin/AdminHome.tsx';
 import AdminDashboard from './pages/admin/Dashboard.tsx';
+import ViewUsers from './components/admin/ViewUsers.tsx';
+import AddUser from './components/admin/AddUser.tsx';
+import ViewCompetences from './components/admin/ViewCompetences.tsx';
+import AddCompetence from './components/admin/AddCompetence.tsx';
+import ViewRegionals from './components/admin/ViewRegionals.tsx';
+import AddRegional from './components/admin/AddRegional.tsx';
+import AdminProfile from './components/admin/AdminProfile.tsx';
 import ErrorPage from './pages/errorpage/ErrorPage.tsx';
 import AsesorDashboard from './pages/asesor-comercial/Dashboard.tsx';
 import DirRegionalDashboard from './pages/director-regional/Dashboard.tsx';
@@ -30,21 +38,55 @@ const routes = createBrowserRouter([
           element: <GeneralLogin/>
         },
         {
-            path: adminRootPath,
-            children: [
-                {
-                  path: adminLoginPath,
-                  element: <AdminLogin/>
-                },
-                {
-                  path: adminRegisterPath,
-                  element: <AdminRegister/>
-                },
-                {
-                  path: adminDashboardPath,
-                  element: <AdminDashboard/>
-                }
-            ]
+          path: adminRootPath,
+          children: [
+              {
+                path: adminLoginPath,
+                element: <AdminLogin/>
+              },
+              {
+                path: adminRegisterPath,
+                element: <AdminRegister/>
+              },
+              {
+                path: adminPortalPath,
+                element: <AdminHome/>,
+                children: [
+                  {
+                    path: adminDashboardPath,
+                    element: <AdminDashboard/>
+                  },
+                  {
+                    path: adminUsersPath,
+                    element: <ViewUsers/>
+                  },
+                  {
+                    path: adminAddUserPath,
+                    element: <AddUser/>
+                  },
+                  {
+                    path: adminCompetencesPath,
+                    element: <ViewCompetences/>
+                  },
+                  {
+                    path: adminAddCompetencePath,
+                    element: <AddCompetence/>
+                  },
+                  {
+                    path: adminRegionalsPath,
+                    element: <ViewRegionals/>
+                  },
+                  {
+                    path: adminAddRegionalPath,
+                    element: <AddRegional/>
+                  },
+                  {
+                    path: adminProfilePath,
+                    element: <AdminProfile/>
+                  }
+                ]
+              }
+          ]
         },
         {
           path: asesorComercialRootPath,

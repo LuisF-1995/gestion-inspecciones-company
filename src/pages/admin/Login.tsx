@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './admin.styles.css';
 import { TextField, Button, Box } from '@mui/material';
 import { API_GESTION_INSPECCIONES_URL } from '../../constants/apis';
 import { sendPost } from '../../services/apiRequests';
-import { adminDashboardPath, adminRegisterPath } from '../../constants/routes';
+import { adminPortalPath, adminRegisterPath } from '../../constants/routes';
 // MATERIAL UI COMPONENTS
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -28,6 +28,13 @@ const AdminLogin = () => {
     secret: '',
     country: '',
   });
+
+  useEffect(() => {
+    if(sessionStorage.length > 0){
+      navigate(`../${adminPortalPath}`);
+    }
+  }, [])
+  
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setLoginData({
@@ -59,7 +66,7 @@ const AdminLogin = () => {
       if(loginResponse && loginResponse.authenticationSuccess && loginResponse.jwtToken && loginResponse.userInfo){
         sessionStorage.setItem(localTokenKeyName, loginResponse.jwtToken);
         sessionStorage.setItem(localUserIdKeyName, loginResponse.userInfo.id);
-        navigate(`../${adminDashboardPath}`);
+        navigate(`../${adminPortalPath}`);
       }
       else if (!loginResponse.authenticationSuccess && loginResponse.userInfo){
         if(loginResponse.userInfo.status === "PENDING_APROVAL"){
