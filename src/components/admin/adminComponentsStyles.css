@@ -1,0 +1,11 @@
+.addUserContainer{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.addUsersForm{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

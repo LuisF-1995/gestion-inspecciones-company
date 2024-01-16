@@ -73,7 +73,7 @@ const routes = createBrowserRouter([
                     element: <AddCompetence/>
                   },
                   {
-                    path: adminRegionalsPath,
+                    path: `${adminRegionalsPath}/:regionalId?`,
                     element: <ViewRegionals/>
                   },
                   {

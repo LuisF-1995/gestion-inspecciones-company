@@ -5,11 +5,11 @@ export const adminPortalPath = "portal";
 export const adminLoginPath = "login";
 export const adminRegisterPath = "register";
 export const adminDashboardPath = "dashboard";
-export const adminUsersPath = "view-users";
+export const adminUsersPath = "users";
 export const adminAddUserPath = "add-user";
-export const adminCompetencesPath = "view-competences";
+export const adminCompetencesPath = "competences";
 export const adminAddCompetencePath = "add-competence";
-export const adminRegionalsPath = "view-regionals";
+export const adminRegionalsPath = "regionals";
 export const adminAddRegionalPath = "add-regional";
 export const adminProfilePath = "profile";
 

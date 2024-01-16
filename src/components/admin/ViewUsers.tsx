@@ -16,12 +16,15 @@ import {
 } from '@mui/x-data-grid';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
-import { Container, ThemeProvider, createTheme } from '@mui/material';
+import { Button, Container, ThemeProvider, createTheme } from '@mui/material';
 import { getUserRoles } from '../../services/globalFunctions';
 import { sendPost } from '../../services/apiRequests';
 import { API_GESTION_INSPECCIONES_URL } from '../../constants/apis';
+import { NavLink } from 'react-router-dom';
+import { adminAddUserPath } from '../../constants/routes';
 
 
 const darkTheme = createTheme({
@@ -34,25 +37,6 @@ const darkTheme = createTheme({
 });
 
 const initialRows: GridRowsProp = [
-  { id: 1, name: "nombre 1", email: "", age: 25 },
-  { id: 2, name: "", email: "", age: 36 },
-  { id: 3, name: "", email: "", age: 19 },
-  { id: 4, name: "", email: "", age: 28 },
-  { id: 5, name: "", email: "", age: 23 },
-  { id: 6, name: "", email: "", age: 27 },
-  { id: 7, name: "", email: "", age: 18 },
-  { id: 8, name: "", email: "", age: 31 },
-  { id: 9, name: "", email: "", age: 24 },
-  { id: 11, name: "", email: "", age: 35 },
-  { id: 12, name: "", email: "", age: 35 },
-  { id: 13, name: "", email: "", age: 35 },
-  { id: 14, name: "", email: "", age: 35 },
-  { id: 15, name: "", email: "", age: 35 },
-  { id: 16, name: "", email: "", age: 35 },
-  { id: 17, name: "", email: "", age: 35 },
-  { id: 18, name: "", email: "", age: 35 },
-  { id: 19, name: "", email: "", age: 35 },
-  { id: 20, name: "", email: "", age: 35 },
 ];
 
 const ViewUsers = () => {
@@ -199,37 +183,44 @@ const ViewUsers = () => {
 
   return (
     <Container maxWidth="xl" sx={{ m:0, p:0 }}>
-      <h2>Ver usuarios</h2>
-      <ThemeProvider theme={darkTheme}>
-        <DataGrid
-          sx={{maxHeight:"75vh", width:"100%", backgroundColor:"#101418"}}
-          key={ignoreDiacritics.toString()}
-          rows={rows}
-          columns={columns}
-          filterModel={filterModel}
-          onFilterModelChange={setFilterModel}
-          slots={{ toolbar: GridToolbar }}
-          slotProps={{ toolbar: { showQuickFilter: true } }}
-          ignoreDiacritics={ignoreDiacritics}
-          columnVisibilityModel={columnVisibilityModel}
-          onColumnVisibilityModelChange={(newModel) =>
-            setColumnVisibilityModel(newModel)
-          }
-          initialState={{
-            pagination: {
-              paginationModel: { page: 0, pageSize: 5 },
-            },
-          }}
-          pageSizeOptions={[5, 10, 25, 50, 100]}
-          checkboxSelection
-          editMode="row"
-          rowModesModel={rowModesModel}
-          onRowModesModelChange={handleRowModesModelChange}
-          onRowEditStop={handleRowEditStop}
-          processRowUpdate={processRowUpdate}
-          loading={loadingTable}
-        />
-      </ThemeProvider>
+      <h2 style={{margin:"10px 0px", textAlign:"center"}}>Ver usuarios</h2>
+      <NavLink style={{ marginBottom: 10 }} to={`../${adminAddUserPath}`}>
+        <Button variant="outlined" color='primary' startIcon={<PersonAddRounded />}>
+          Agregar usuario
+        </Button>
+      </NavLink>
+      <section style={{margin:"10px 0px"}}>
+        <ThemeProvider theme={darkTheme}>
+          <DataGrid
+            sx={{height:"70vh", width:"100%", backgroundColor:"#101418"}}
+            key={ignoreDiacritics.toString()}
+            rows={rows}
+            columns={columns}
+            filterModel={filterModel}
+            onFilterModelChange={setFilterModel}
+            slots={{ toolbar: GridToolbar }}
+            slotProps={{ toolbar: { showQuickFilter: true } }}
+            ignoreDiacritics={ignoreDiacritics}
+            columnVisibilityModel={columnVisibilityModel}
+            onColumnVisibilityModelChange={(newModel) =>
+              setColumnVisibilityModel(newModel)
+            }
+            initialState={{
+              pagination: {
+                paginationModel: { page: 0, pageSize: 5 },
+              },
+            }}
+            pageSizeOptions={[5, 10, 25, 50, 100]}
+            checkboxSelection
+            editMode="row"
+            rowModesModel={rowModesModel}
+            onRowModesModelChange={handleRowModesModelChange}
+            onRowEditStop={handleRowEditStop}
+            processRowUpdate={processRowUpdate}
+            loading={loadingTable}
+          />
+        </ThemeProvider>
+      </section>
     </Container>
   )
 }

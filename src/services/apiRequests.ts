@@ -55,14 +55,12 @@ export async function sendPut (endpoint:string, dataUpdate:any, token?:string){
     if (token && token.length > 0) {
         headers = {
             'Content-Type': 'application/json',
-            'Origin': 'http://localhost:3000',
             'Authorization': `Bearer ${token}`
         }
     }
     else{
         headers = {
             'Content-Type': 'application/json',
-            'Origin': 'http://localhost:3000',
         }
     }
 
@@ -82,14 +80,12 @@ export async function sendDelete (endpoint:string, idDelete:number, token?:strin
     if (token && token.length > 0) {
         headers = {
             'Content-Type': 'application/json',
-            'Origin': 'http://localhost:3000',
             'Authorization': `Bearer ${token}`
         }
     }
     else{
         headers = {
             'Content-Type': 'application/json',
-            'Origin': 'http://localhost:3000',
         }
     }
 

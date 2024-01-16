@@ -6,29 +6,11 @@ import { localTokenKeyName, localUserIdKeyName } from '../../constants/globalCon
 import { AppBar, Avatar, Backdrop, Box, Button, CircularProgress, Container, Divider, IconButton, ListItemIcon, Menu, MenuItem, ThemeProvider, Toolbar, Tooltip, Typography, createTheme } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
-import { adminPortalPath, adminLoginPath, adminProfilePath, adminUsersPath, adminCompetencesPath, adminRegionalsPath, adminAddUserPath } from '../../constants/routes'
+import { adminPortalPath, adminLoginPath, adminProfilePath, adminUsersPath, adminCompetencesPath, adminRegionalsPath, adminAddUserPath, adminAddRegionalPath } from '../../constants/routes'
 import Swal from 'sweetalert2'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Logout } from '@mui/icons-material'
 
-const pages = [
-  {
-    name: 'Usuarios',
-    path: `${adminUsersPath}`,
-    items: [
-    ]
-  },
-  {
-    name: 'Competencias',
-    path: `${adminCompetencesPath}`,
-    items: []
-  },
-  {
-    name: 'Regionales',
-    path: `${adminRegionalsPath}`,
-    items: []
-  }
-];
 
 const darkTheme = createTheme({
   palette: {
@@ -41,6 +23,28 @@ const darkTheme = createTheme({
 
 const AdminHome = () => {
     const navigate = useNavigate();
+    const usersPageName = "Usuarios";
+    const competencesPageName = "Competencias";
+    const regionalsPageName = "Regionales";
+    const [pages, setPages] = useState(
+      [
+        {
+          name: usersPageName,
+          path: `${adminUsersPath}`,
+          items: []
+        },
+        {
+          name: competencesPageName,
+          path: `${adminCompetencesPath}`,
+          items: []
+        },
+        {
+          name: regionalsPageName,
+          path: `${adminRegionalsPath}`,
+          items: []
+        }
+      ]
+    );
     const [waiting, setWaiting] = useState(true);
     const [userInfo, setUserInfo] = useState(null);
     const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
@@ -76,6 +80,7 @@ const AdminHome = () => {
     useEffect(() => {
       if(sessionStorage.length > 0){
         getUserInfo();
+        getRegionalsInfo();
       }
       else{
         setWaiting(false);
@@ -137,6 +142,52 @@ const AdminHome = () => {
         }
       }
     }
+
+    const getRegionalsInfo = async() => {
+      const jwtToken = sessionStorage.getItem(localTokenKeyName);
+      setWaiting(true);
+  
+      if(jwtToken){
+        try {
+          const regionalsInfo = await sendGet(`${API_GESTION_INSPECCIONES_URL}/regionales`, jwtToken);
+          setWaiting(false);
+
+          if(regionalsInfo && regionalsInfo.status === 200 && regionalsInfo.data){
+            const regionalsOpt:{name:string; path:string}[] = [
+              {
+                name: 'Agregar',
+                path: `${adminAddRegionalPath}`
+              }
+            ];
+            const regionalsData:any[] = regionalsInfo.data;
+            const actualPagesInfo:{
+              name: string;
+              path: string;
+              items: {
+                  name: string;
+                  path: string;
+              }[];
+            } = pages.filter(page => page.name === regionalsPageName)[0];
+
+            if(regionalsData && regionalsData.length > 0){
+              regionalsData.forEach(regional => {
+                const item = {
+                  name: regional.ciudad,
+                  path: `${adminRegionalsPath}/${regional.id}`
+                }
+                regionalsOpt.push(item);
+              });
+            }
+            
+            actualPagesInfo.items = regionalsOpt;
+          }
+        } 
+        catch (error) {
+          setWaiting(false);
+          sessionStorage.clear();
+        }
+      }
+    }
   
     return (
       userInfo ?
@@ -151,11 +202,12 @@ const AdminHome = () => {
               </NavLink>
               <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, justifyContent:'center', alignItems: "center", height:50, gap: "5px" }}>
                 {pages.map((page:{name:string, path:string, items:any[]}, index:number) => (
-                  <div onMouseEnter={() => setActiveSubMenu(index)} 
-                      onMouseLeave={() => setActiveSubMenu(null)}
-                      style={{height:"100%"}} 
+                  <div key={index}
+                    onMouseEnter={() => setActiveSubMenu(index)} 
+                    onMouseLeave={() => setActiveSubMenu(null)}
+                    style={{height:"100%", zIndex:1}}
                   >
-                    <NavLink key={index} to={page.path} className="nav-bar-option"
+                    <NavLink  to={page.path} className="nav-bar-option"
                       style={({ isActive, isPending, isTransitioning }) => {
                         return {
                           textDecoration: "none",
@@ -176,7 +228,6 @@ const AdminHome = () => {
                                 return {
                                   textDecoration: "none",
                                   display: "flex",
-                                  fontWeight: isActive ? "bold" : "",
                                   color: isPending ? "red" : "white",
                                   viewTransitionName: isTransitioning ? "slide" : "",
                                 };
@@ -291,16 +342,16 @@ const AdminHome = () => {
                   anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                   keepMounted
                 >
-                    <MenuItem key="user-profile" onClick={goToProfile}>
-                      <Avatar /><Typography textAlign="center">Mi perfil</Typography>
-                    </MenuItem>
-                    <Divider/>
-                    <MenuItem key="close-session" onClick={handleCloseSession}>
-                      <ListItemIcon>
-                        <Logout fontSize="small" />
-                      </ListItemIcon>
-                      Cerrar sesión
-                    </MenuItem>
+                  <MenuItem key="user-profile" onClick={goToProfile}>
+                    <Avatar /><Typography textAlign="center">Mi perfil</Typography>
+                  </MenuItem>
+                  <Divider/>
+                  <MenuItem key="close-session" onClick={handleCloseSession}>
+                    <ListItemIcon>
+                      <Logout fontSize="small" />
+                    </ListItemIcon>
+                    Cerrar sesión
+                  </MenuItem>
                 </Menu>
               </Box>
             </Toolbar>
