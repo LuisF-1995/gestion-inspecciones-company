@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { Backdrop, Button, CircularProgress, Container, ThemeProvider, createTheme } from '@mui/material';
-import { DataGrid, GridActionsCellItem, GridColDef, GridColumnVisibilityModel, GridEventListener, GridFilterModel, GridRowEditStopReasons, GridRowId, GridRowModel, GridRowModes, GridRowModesModel, GridRowsProp, GridToolbar } from '@mui/x-data-grid';
 import { NavLink, useNavigate, useParams } from 'react-router-dom';
-import SaveIcon from '@mui/icons-material/Save';
-import CancelIcon from '@mui/icons-material/Close';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/DeleteOutlined';
-import { adminAddRegionalPath, adminLoginPath } from '../../constants/routes';
+import { adminAddRegionalPath, adminAddUserPath, adminLoginPath } from '../../constants/routes';
 import { localTokenKeyName } from '../../constants/globalConstants';
 import { sendDelete, sendGet, sendPost, sendPut } from '../../services/apiRequests';
 import { API_GESTION_INSPECCIONES_URL } from '../../constants/apis';
 import Swal from 'sweetalert2';
-import { IRegionalApiData, IRegionalTableData } from '../Interfaces';
-
+import { IRegionalApiData, IUserApiData } from '../Interfaces';
+import { Backdrop, Button, CircularProgress, Container, MenuItem, Select, SelectChangeEvent, ThemeProvider, createTheme } from '@mui/material';
+import { DataGrid, GridActionsCellItem, GridColDef, GridColumnVisibilityModel, GridEventListener, GridFilterModel, GridRowEditStopReasons, GridRowId, GridRowModel, GridRowModes, GridRowModesModel, GridRowsProp, GridToolbar, GridValueGetterParams } from '@mui/x-data-grid';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Close';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
 
 const darkTheme = createTheme({
   palette: {
@@ -32,6 +32,7 @@ const ViewRegionals = () => {
   const { regionalId } = useParams();
   const [token, setToken] = useState("");
   const [regionalInfo, setRegionalInfo] = useState(null);
+  const [regionalDirectorsOpt, setRegionalDirectorsOpt] = useState<IUserApiData[]>([]);
   const [waiting, setWaiting] = useState(false);
   const [filterModel, setFilterModel] = useState<GridFilterModel>({
     items: [],
@@ -76,14 +77,40 @@ const ViewRegionals = () => {
     }
   }, [regionalId])
 
+  useEffect(()=>{
+    if(sessionStorage.length > 0){
+      const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
+      getRegionalDirectors(jwtToken);
+    }
+    else{
+      setWaiting(false);
+      Swal.fire({
+        title: 'Expiró la sesión',
+        text: `La sesión expiró, debe volver a iniciar sesión`,
+        icon: 'info',
+        confirmButtonText: "Iniciar sesión"
+      })
+      .then(option => {
+        if(option.isConfirmed){
+          Swal.close();
+          navigate(`../${adminLoginPath}`);
+        }
+        else
+          setTimeout(() => {
+            Swal.close();
+            navigate(`../${adminLoginPath}`);
+          }, 5000);
+      })
+    }
+  }, [])
+
   const getRegionalInfoById = async (idRegional:string|number, jwtToken:string) => {
-    setLoadingTable(true);
+    setWaiting(true);
 
     if(jwtToken){
       try {
         const regionalInfo = await sendGet(`${API_GESTION_INSPECCIONES_URL}/regionales/id/${idRegional}`, jwtToken);
         setWaiting(false);
-        setLoadingTable(false);
 
         if(regionalInfo && regionalInfo.status === 200 && regionalInfo.data){
           const regionalData = regionalInfo.data;
@@ -91,7 +118,6 @@ const ViewRegionals = () => {
         }
       }
       catch (error) {
-        setLoadingTable(false);
         setWaiting(false);
         sessionStorage.clear();
       }
@@ -108,13 +134,13 @@ const ViewRegionals = () => {
         setLoadingTable(false);
 
         if(regionalsInfo && regionalsInfo.status === 200 && regionalsInfo.data){
-          const regionalsData:any[] = regionalsInfo.data;
-          const regionalDataArray = regionalsData.map(regional => ({
+          const regionalsData:IRegionalApiData[]|any = regionalsInfo.data;
+          const regionalDataArray = regionalsData.map((regional:IRegionalApiData) => ({
             ...regional,
             directorRegional: regional.directorRegional === null || regional.directorRegional === undefined ? "" : `${regional.directorRegional.nombres} ${regional.directorRegional.apellidos}`
           }));
-          setRegionalInfo(regionalDataArray);
-          setRows(regionalDataArray);
+          setRegionalInfo(regionalsData);
+          setRows(regionalsData);
         }
       }
       catch (error) {
@@ -125,6 +151,82 @@ const ViewRegionals = () => {
     }
   }
   
+  const getRegionalDirectors = async (jwtToken:string) => {
+    setWaiting(true);
+
+    if(jwtToken){
+      try {
+        const regionalDirectors = await sendGet(`${API_GESTION_INSPECCIONES_URL}/directores-regional/all`, jwtToken);
+        setWaiting(false);
+
+        if(regionalDirectors && regionalDirectors.status === 200 && regionalDirectors.data){
+          const regionalDirectorsArray:any[] = regionalDirectors.data;
+          setRegionalDirectorsOpt(regionalDirectorsArray);
+        }
+      }
+      catch (error) {
+        setWaiting(false);
+        sessionStorage.clear();
+      }
+    }
+  }
+
+  const handleRegionalDirectorSelector = async (rowId:GridRowId, selectedRegionalDirectorId:SelectChangeEvent<number>|any) => {
+    if(selectedRegionalDirectorId === "AddDirRegional"){
+      navigate(`../${adminAddUserPath}`);
+    }
+    else{
+      const regionalDirectorUpdate:IUserApiData = {
+        id: parseInt(selectedRegionalDirectorId.toString()),
+        regional: parseInt(rowId.toString())
+      }
+  
+      if(sessionStorage.length > 0){
+        const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
+        await updateRegionalDirector(jwtToken, regionalDirectorUpdate);
+      }
+      else{
+        setWaiting(false);
+        Swal.fire({
+          title: 'Expiró la sesión',
+          text: `La sesión expiró, debe volver a iniciar sesión`,
+          icon: 'info',
+          confirmButtonText: "Iniciar sesión"
+        })
+        .then(option => {
+          if(option.isConfirmed){
+            Swal.close();
+            navigate(`../${adminLoginPath}`);
+          }
+          else
+            setTimeout(() => {
+              Swal.close();
+              navigate(`../${adminLoginPath}`);
+            }, 5000);
+        })
+      }
+    }
+  };
+
+  const updateRegionalDirector = async (jwtToken:string, dataUpdate:IUserApiData) => {
+    setWaiting(true);
+
+    try{
+      const regionalDirectorUpdateResponse:IUserApiData|any|null = await sendPut(`${API_GESTION_INSPECCIONES_URL}/directores-regional/update`, dataUpdate, token);
+      await getRegionalDirectors(jwtToken);
+      await getRegionalsInfo(jwtToken);
+      setWaiting(false);
+    }
+    catch(rejected){
+      setWaiting(false);
+      Swal.fire({
+        title: "Error de conexión",
+        text: `No se pudo actualizar la información, verificar conexión a internet o comunicate con nosotros.`,
+        icon: 'error'
+      })
+    }
+
+  }
 
   const handleRowEditStop: GridEventListener<'rowEditStop'> = (params, event) => {
     if (params.reason === GridRowEditStopReasons.rowFocusOut) {
@@ -136,7 +238,7 @@ const ViewRegionals = () => {
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
   };
 
-  const updateRegional = async (data:IRegionalTableData|any) => {
+  const updateRegional = async (data:IRegionalApiData|any) => {
     setWaiting(true);
 
     try{
@@ -153,7 +255,7 @@ const ViewRegionals = () => {
     }
   }
 
-  const handleSaveClick = (id: GridRowId, row:IRegionalTableData) => async () => {
+  const handleSaveClick = (id: GridRowId, row:IRegionalApiData) => async () => {
     
     const regionalUpdateObj = {
       id: row.id,
@@ -216,7 +318,30 @@ const ViewRegionals = () => {
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', type:'number', width: 60, headerAlign:'center', editable:false, hideable:true },
     { field: 'ciudad', headerName: 'Ciudad', type:'string', minWidth: 200, maxWidth:500, headerAlign:'center', align:'center', editable:true },
-    { field: 'directorRegional', headerName: 'Director Regional', type:'string', minWidth: 500, maxWidth:800, headerAlign:'center', align:'center', editable:false },
+    {
+      field: 'directorRegional',
+      headerName: 'Director Regional',
+      minWidth: 500, maxWidth:800, headerAlign:'center', align:'center', editable:false,
+      renderCell: (params: GridValueGetterParams) => (
+        <Select
+          fullWidth
+          variant='outlined'
+          value={params.row.directorRegional ? params.row.directorRegional.id : ""}
+          onChange={(e) => handleRegionalDirectorSelector(params.row.id, e.target.value)}
+        >
+          <MenuItem key={"AgregarRD"} value={"AddDirRegional"}>
+            <Button fullWidth variant="outlined" color='primary' startIcon={<PersonAddRounded />}>
+              Agregar usuario
+            </Button>
+          </MenuItem>
+          {regionalDirectorsOpt && regionalDirectorsOpt.length > 0 && regionalDirectorsOpt.map((regionalDirector:IUserApiData) => (
+            <MenuItem key={regionalDirector.id} value={regionalDirector.id}>
+              {`${regionalDirector.nombres} ${regionalDirector.apellidos}`}
+            </MenuItem>
+          ))}
+        </Select>
+      ),
+    },
     {
       field: 'actions',
       type: 'actions',

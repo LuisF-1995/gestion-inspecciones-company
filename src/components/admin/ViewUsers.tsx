@@ -20,11 +20,13 @@ import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
 import { Button, Container, ThemeProvider, createTheme } from '@mui/material';
-import { getUserRoles } from '../../services/globalFunctions';
-import { sendPost } from '../../services/apiRequests';
+import { getComercialAdvisors, getInspectors, getRegionalDirectors, getScheduleProgrammers, getTechnicalDirectors, getUserRoles } from '../../services/globalFunctions';
 import { API_GESTION_INSPECCIONES_URL } from '../../constants/apis';
-import { NavLink } from 'react-router-dom';
-import { adminAddUserPath } from '../../constants/routes';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { adminAddUserPath, adminLoginPath } from '../../constants/routes';
+import { localTokenKeyName } from '../../constants/globalConstants';
+import Swal from 'sweetalert2';
+import { IUserApiData } from '../Interfaces';
 
 
 const darkTheme = createTheme({
@@ -40,6 +42,10 @@ const initialRows: GridRowsProp = [
 ];
 
 const ViewUsers = () => {
+  const navigate = useNavigate();
+  const [token, setToken] = useState("");
+  const [waiting, setWaiting] = useState(false);
+  const [usersState, setUsersState] = useState<IUserApiData[]>([]);
   const [filterModel, setFilterModel] = useState<GridFilterModel>({
     items: [],
     quickFilterExcludeHiddenColumns: true,
@@ -51,6 +57,54 @@ const ViewUsers = () => {
   const [userRoles, setUserRoles] = useState([]);
   const [rows, setRows] = useState(initialRows);
   const [loadingTable, setLoadingTable] = useState(false);
+
+  useEffect(() => {
+    getUserRolesArray();
+    if(sessionStorage.length > 0){
+      const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
+      setToken(jwtToken);
+      getUsers(jwtToken);
+    }
+    else{
+      setWaiting(false);
+      Swal.fire({
+        title: 'Expiró la sesión',
+        text: `La sesión expiró, debe volver a iniciar sesión`,
+        icon: 'info',
+        confirmButtonText: "Iniciar sesión"
+      })
+      .then(option => {
+        if(option.isConfirmed){
+          Swal.close();
+          navigate(`../${adminLoginPath}`);
+        }
+        else
+          setTimeout(() => {
+            Swal.close();
+            navigate(`../${adminLoginPath}`);
+          }, 5000);
+      })
+    }
+  }, [])
+
+  const getUserRolesArray = async() => {
+    const roles = await getUserRoles();
+    setUserRoles(roles);
+  }
+
+  const getUsers = async (jwtToken:string) => {
+    setLoadingTable(true);
+    const asesoresComerciales:IUserApiData[] = await getComercialAdvisors(jwtToken);
+    const directoresRegional:IUserApiData[] = await getRegionalDirectors(jwtToken);
+    const directoresTecnicos:IUserApiData[] = await getTechnicalDirectors(jwtToken);
+    const inspectores:IUserApiData[] = await getInspectors(jwtToken);
+    const programadoresAgenda:IUserApiData[] = await getScheduleProgrammers(jwtToken);
+
+    const totalUsers:IUserApiData[] = [...asesoresComerciales, ...directoresRegional, ...directoresTecnicos, ...inspectores, ...programadoresAgenda];
+    setUsersState(totalUsers);
+    setRows(totalUsers);
+    setLoadingTable(false);
+  }
 
   const handleRowEditStop: GridEventListener<'rowEditStop'> = (params, event) => {
     if (params.reason === GridRowEditStopReasons.rowFocusOut) {
@@ -92,40 +146,9 @@ const ViewUsers = () => {
     setRowModesModel(newRowModesModel);
   };
 
-  useEffect(() => {
-    getUserRolesArray();
-  }, [])
-
-  const getUserRolesArray = async() => {
-    const roles = await getUserRoles();
-    setUserRoles(roles);
-  }
-
-  const RegisterUserByRol = async(rol:string, body:{email:string, password:string}) => {
-    switch (rol) {
-      case "INSPECTOR":
-        const loginInspectorResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/inspectores/login`, body);
-        return loginInspectorResponse;
-      case "ASESOR_COMERCIAL":
-        const loginAsesorResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/asesores-comerciales/login`, body);
-        return loginAsesorResponse;
-      case "DIRECTOR_REGIONAL":
-        const loginDirRegionalResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/directores-regional/login`, body);
-        return loginDirRegionalResponse;
-      case "DIRECTOR_TECNICO":
-        const loginDirTecnicoResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/directores-tecnicos/login`, body);
-        return loginDirTecnicoResponse;
-      case "PROGRAMADOR_AGENDA":
-        const loginProgramadorResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/programador-agenda/login`, body);
-        return loginProgramadorResponse;
-        
-      default:
-        return null;
-    }
-  }
 
   const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', width: 60, headerAlign:'center', editable:false, hideable:true },
+    //{ field: 'id', headerName: 'ID', width: 60, headerAlign:'center', editable:false, hideable:true },
     { field: 'nombres', headerName: 'Nombres', type:'string', minWidth: 200, maxWidth:500, headerAlign:'center', align:'center', editable:true },
     { field: 'apellidos', headerName: 'Apellidos', type:'string', minWidth: 200, maxWidth:500, headerAlign:'center', align:'center', editable:true },
     { field: 'email', headerName: 'Email', type:'string', minWidth: 200, maxWidth:300, headerAlign:'center', align:'center', editable:true },
@@ -207,10 +230,10 @@ const ViewUsers = () => {
             }
             initialState={{
               pagination: {
-                paginationModel: { page: 0, pageSize: 5 },
+                paginationModel: { page: 0, pageSize: 10 },
               },
             }}
-            pageSizeOptions={[5, 10, 25, 50, 100]}
+            pageSizeOptions={[10, 25, 50, 100]}
             checkboxSelection
             editMode="row"
             rowModesModel={rowModesModel}

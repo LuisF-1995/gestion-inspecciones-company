@@ -1,11 +1,12 @@
 export interface IUserApiData{
-    nombres:string;
-    apellidos:string;
-    email:string;
-    password:string;
-    telefono:string;
+    id?:number;
+    nombres?:string;
+    apellidos?:string;
+    email?:string;
+    password?:string;
+    telefono?:string;
     regional?:number|undefined;
-    rol:string
+    rol?:string
 }
 
 export interface IRegionalApiData{

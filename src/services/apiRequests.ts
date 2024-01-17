@@ -64,14 +64,13 @@ export async function sendPut (endpoint:string, dataUpdate:any, token?:string){
         }
     }
 
-    axios
-    .put(endpoint, dataUpdate, {headers: headers})
-    .then((response: any) => {
+    try {
+        const response = await axios.put(endpoint, dataUpdate, {headers: headers});
         return response;
-    })
-    .catch((error: any) => {
+    } 
+    catch (error) {
         return error;
-    });
+    }
 }
 
 export async function sendDelete (endpoint:string, idDelete:number, token?:string){
@@ -89,12 +88,11 @@ export async function sendDelete (endpoint:string, idDelete:number, token?:strin
         }
     }
 
-    axios
-    .delete(`${endpoint}/${idDelete}`, {headers: headers})
-    .then((response: any) => {
+    try {
+        const response = await axios.delete(`${endpoint}/${idDelete}`, {headers: headers})
         return response;
-    })
-    .catch((error: any) => {
+    } 
+    catch (error) {
         return error;
-    });
+    }
 }

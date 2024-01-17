@@ -2,16 +2,16 @@ import React, { useEffect, useState } from 'react';
 import './adminComponentsStyles.css';
 import { API_GESTION_INSPECCIONES_URL } from '../../constants/apis';
 import { getUserRoles } from '../../services/globalFunctions';
+import { useNavigate } from 'react-router-dom';
 import { sendGet, sendPost } from '../../services/apiRequests';
 import Swal from 'sweetalert2';
+import { IUserApiData } from '../Interfaces';
+import { localTokenKeyName } from '../../constants/globalConstants';
 // MATERIAL UI COMPONENTS
 import { TextField, Button, Grid, Container, InputAdornment, FormControl, InputLabel, OutlinedInput, IconButton, Popover, Typography, Select, MenuItem, Autocomplete, Box } from '@mui/material';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
-import { useNavigate } from 'react-router-dom';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { localTokenKeyName } from '../../constants/globalConstants';
-import { IUserApiData } from '../Interfaces';
 
 
 const AddUser = () => {

@@ -1,6 +1,7 @@
 import Swal from "sweetalert2";
 import { API_GESTION_INSPECCIONES_URL } from "../constants/apis";
 import { sendGet } from "./apiRequests";
+import { IUserApiData } from "../components/Interfaces";
 
 export const getUserRoles = async():Promise<any> => {
   return new Promise<any>(async (resolve, reject) => {
@@ -32,15 +33,139 @@ export const getUserRoles = async():Promise<any> => {
   }) 
 }
 
-export const getComercialAdvisors = async() => {
-  return new Promise<any>((resolve, reject) => {
+export const getComercialAdvisors = (jwtToken:string): Promise<IUserApiData|any> => {
+  return new Promise<any>(async (resolve, reject) => {
     try {
-      
+      const comercialAdvisors:any = await sendGet(`${API_GESTION_INSPECCIONES_URL}/asesores-comerciales/all`, jwtToken);
+      if(comercialAdvisors.data){
+        const comercialAdvisorsData:IUserApiData[] = comercialAdvisors.data;
+        resolve(comercialAdvisorsData);
+      }
+      else if (comercialAdvisors && comercialAdvisors.message) {
+        Swal.fire({
+          title: "Error de conexión",
+          text: `${comercialAdvisors.message}`,
+          icon: 'error'
+        })
+        resolve([]);
+      }
     } 
     catch (error) {
       Swal.fire({
         title: "Error de conexión",
-        text: `No se pudo obtener información de los roles, verificar conexión a internet o comunicate con nosotros.`,
+        text: `No se pudo obtener información de los asesores comerciales, verificar conexión a internet o comunicate con nosotros.`,
+        icon: 'error'
+      })
+      resolve([]);
+    }
+  })
+}
+
+export const getRegionalDirectors = (jwtToken:string): Promise<IUserApiData|any> => {
+  return new Promise<any>(async (resolve, reject) => {
+    try {
+      const regionalDirectors:any = await sendGet(`${API_GESTION_INSPECCIONES_URL}/directores-regional/all`, jwtToken);
+      if(regionalDirectors.data){
+        const regionalDirectorsData:IUserApiData[] = regionalDirectors.data;
+        resolve(regionalDirectorsData);
+      }
+      else if (regionalDirectors && regionalDirectors.message) {
+        Swal.fire({
+          title: "Error de conexión",
+          text: `${regionalDirectors.message}`,
+          icon: 'error'
+        })
+        resolve([]);
+      }
+    } 
+    catch (error) {
+      Swal.fire({
+        title: "Error de conexión",
+        text: `No se pudo obtener información de los directores de regional, verificar conexión a internet o comunicate con nosotros.`,
+        icon: 'error'
+      })
+      resolve([]);
+    }
+  })
+}
+
+export const getTechnicalDirectors = (jwtToken:string): Promise<IUserApiData|any> => {
+  return new Promise<any>(async (resolve, reject) => {
+    try {
+      const technicalDirectors:any = await sendGet(`${API_GESTION_INSPECCIONES_URL}/directores-tecnicos/all`, jwtToken);
+      if(technicalDirectors.data){
+        const technicalDirectorsData:IUserApiData[] = technicalDirectors.data;
+        resolve(technicalDirectorsData);
+      }
+      else if (technicalDirectors && technicalDirectors.message) {
+        Swal.fire({
+          title: "Error de conexión",
+          text: `${technicalDirectors.message}`,
+          icon: 'error'
+        })
+        resolve([]);
+      }
+    } 
+    catch (error) {
+      Swal.fire({
+        title: "Error de conexión",
+        text: `No se pudo obtener información de los directores técnicos, verificar conexión a internet o comunicate con nosotros.`,
+        icon: 'error'
+      })
+      resolve([]);
+    }
+  })
+}
+
+export const getInspectors = (jwtToken:string): Promise<IUserApiData|any> => {
+  return new Promise<any>(async (resolve, reject) => {
+    try {
+      const inspectors:any = await sendGet(`${API_GESTION_INSPECCIONES_URL}/inspectores`, jwtToken);
+      if(inspectors.data){
+        const inspectorsData:IUserApiData[] = inspectors.data;
+        resolve(inspectorsData);
+      }
+      else if (inspectors && inspectors.message) {
+        Swal.fire({
+          title: "Error de conexión",
+          text: `${inspectors.message}`,
+          icon: 'error'
+        })
+        resolve([]);
+      }
+    } 
+    catch (error) {
+      Swal.fire({
+        title: "Error de conexión",
+        text: `No se pudo obtener información de los inspectores, verificar conexión a internet o comunicate con nosotros.`,
+        icon: 'error'
+      })
+      resolve([]);
+    }
+  })
+}
+
+export const getScheduleProgrammers = (jwtToken:string): Promise<IUserApiData|any> => {
+  return new Promise<any>(async (resolve, reject) => {
+    try {
+      const scheduleProgrammers:any = await sendGet(`${API_GESTION_INSPECCIONES_URL}/programador-agenda/all`, jwtToken);
+      if(scheduleProgrammers.data){
+        const programmersData:IUserApiData[] = scheduleProgrammers.data;
+        resolve(programmersData);
+      }
+      else if (scheduleProgrammers && scheduleProgrammers.message) {
+        Swal.fire({
+          title: "Error de conexión",
+          text: `${scheduleProgrammers.message}`,
+          icon: 'error'
+        })
+        resolve([]);
+      }
+    } 
+    catch (error) {
+      Swal.fire({
+        title: "Error de conexión",
+        text: `No se pudo obtener información de los programadores de agenda, verificar conexión a internet o comunicate con nosotros.`,
         icon: 'error'
       })
       resolve([]);
