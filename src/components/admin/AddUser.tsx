@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import './adminComponentsStyles.css';
-import { API_GESTION_INSPECCIONES_URL } from '../../constants/apis';
+import { API_GESTION_INSPECCIONES_URL, COMMERCIAL_ADVISORS, INSPECTORS, REGIONAL_DIRECTORS, SCHEDULE_PROGRAMMERS, TECHNICAL_DIRECTORS } from '../../constants/apis';
 import { getUserRoles } from '../../services/globalFunctions';
 import { useNavigate } from 'react-router-dom';
 import { sendGet, sendPost } from '../../services/apiRequests';
 import Swal from 'sweetalert2';
 import { IUserApiData } from '../Interfaces';
-import { localTokenKeyName } from '../../constants/globalConstants';
+import { apiUserRoles, localTokenKeyName } from '../../constants/globalConstants';
 // MATERIAL UI COMPONENTS
 import { TextField, Button, Grid, Container, InputAdornment, FormControl, InputLabel, OutlinedInput, IconButton, Popover, Typography, Select, MenuItem, Autocomplete, Box } from '@mui/material';
 import Backdrop from '@mui/material/Backdrop';
@@ -129,20 +129,20 @@ const AddUser = () => {
 
   const registerUserByRol = async(rol:string, body:IUserApiData) => {
     switch (rol) {
-      case "INSPECTOR":
-        const inspectorResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/inspectores/register`, body, token);
+      case apiUserRoles.inspector:
+        const inspectorResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/${INSPECTORS}/register`, body, token);
         return inspectorResponse;
-      case "ASESOR_COMERCIAL":
-        const asesorResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/asesores-comerciales/register`, body, token);
+      case apiUserRoles.asesorComercial:
+        const asesorResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/${COMMERCIAL_ADVISORS}/register`, body, token);
         return asesorResponse;
-      case "DIRECTOR_REGIONAL":
-        const dirRegionalResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/directores-regional/register`, body, token);
+      case apiUserRoles.directorRegional:
+        const dirRegionalResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/${REGIONAL_DIRECTORS}/register`, body, token);
         return dirRegionalResponse;
-      case "DIRECTOR_TECNICO":
-        const dirTecnicoResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/directores-tecnicos/register`, body, token);
+      case apiUserRoles.directorTecnico:
+        const dirTecnicoResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/${TECHNICAL_DIRECTORS}/register`, body, token);
         return dirTecnicoResponse;
-      case "PROGRAMADOR_AGENDA":
-        const programadorAgendaResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/programador-agenda/register`, body, token);
+      case apiUserRoles.programadorAgenda:
+        const programadorAgendaResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/${SCHEDULE_PROGRAMMERS}/register`, body, token);
         return programadorAgendaResponse;
         
       default:

@@ -13,20 +13,23 @@ import {
   GridRowEditStopReasons,
   GridRowId,
   GridRowModel,
+  GridValueGetterParams,
 } from '@mui/x-data-grid';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
-import { Button, Container, ThemeProvider, createTheme } from '@mui/material';
-import { getComercialAdvisors, getInspectors, getRegionalDirectors, getScheduleProgrammers, getTechnicalDirectors, getUserRoles } from '../../services/globalFunctions';
-import { API_GESTION_INSPECCIONES_URL } from '../../constants/apis';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { Backdrop, Box, Button, ButtonBase, CircularProgress, Container, Fade, MenuItem, Modal, Select, SelectChangeEvent, ThemeProvider, Typography, createTheme, styled } from '@mui/material';
+import { getComercialAdvisors, getInspectors, getRegionalDirectors, getRegionalsInfo, getScheduleProgrammers, getTechnicalDirectors, getUserRoles } from '../../services/globalFunctions';
+import { API_GESTION_INSPECCIONES_URL, COMMERCIAL_ADVISORS, INSPECTORS, REGIONAL_DIRECTORS, SCHEDULE_PROGRAMMERS, TECHNICAL_DIRECTORS } from '../../constants/apis';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { adminAddUserPath, adminLoginPath } from '../../constants/routes';
-import { localTokenKeyName } from '../../constants/globalConstants';
+import { apiUserRoles, localTokenKeyName } from '../../constants/globalConstants';
 import Swal from 'sweetalert2';
-import { IUserApiData } from '../Interfaces';
+import { IRegionalApiData, IUserApiData } from '../Interfaces';
+import { sendDelete, sendGet, sendPut } from '../../services/apiRequests';
 
 
 const darkTheme = createTheme({
@@ -38,8 +41,118 @@ const darkTheme = createTheme({
   },
 });
 
+const modalStyle = {
+  position: 'absolute' as 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: '96vw',
+  bgcolor: 'background.paper',
+  boxShadow: 24,
+  p: 0,
+  borderRadius:"10px"
+};
+
 const initialRows: GridRowsProp = [
 ];
+
+const images = [
+  {
+    url: '../../images/commercial.jpg',
+    title: 'Asesores comerciales',
+    width: '40%',
+    rol: apiUserRoles.asesorComercial
+  },
+  {
+    url: '../../images/oficinaDirRegional.jpg',
+    title: 'Directores de regional',
+    width: '40%',
+    rol: apiUserRoles.directorRegional
+  },
+  {
+    url: '../../images/directorTecnico.jpg',
+    title: 'Directores técnicos',
+    width: '40%',
+    rol: apiUserRoles.directorTecnico
+  },
+  {
+    url: '../../images/inspector.jpg',
+    title: 'Inspectores',
+    width: '40%',
+    rol: apiUserRoles.inspector
+  },
+  {
+    url: '../../images/programadorAgenda.jpg',
+    title: 'Programadores de agenda',
+    width: '40%',
+    rol: apiUserRoles.programadorAgenda
+  },
+];
+
+const ImageButton = styled(ButtonBase)(({ theme }) => ({
+  position: 'relative',
+  height: 200,
+  [theme.breakpoints.down('sm')]: {
+    width: '100% !important', // Overrides inline-style
+    height: 150,
+  },
+  '&:hover, &.Mui-focusVisible': {
+    zIndex: 1,
+    '& .MuiImageBackdrop-root': {
+      opacity: 0.15,
+    },
+    '& .MuiImageMarked-root': {
+      opacity: 0,
+    },
+    '& .MuiTypography-root': {
+      border: '4px solid currentColor',
+    },
+  },
+}));
+
+const ImageSrc = styled('span')({
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  top: 0,
+  bottom: 0,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center 40%',
+});
+
+const Image = styled('span')(({ theme }) => ({
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  top: 0,
+  bottom: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: theme.palette.common.white,
+}));
+
+const ImageBackdrop = styled('span')(({ theme }) => ({
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  top: 0,
+  bottom: 0,
+  backgroundColor: theme.palette.common.black,
+  opacity: 0.4,
+  transition: theme.transitions.create('opacity'),
+}));
+
+const ImageMarked = styled('span')(({ theme }) => ({
+  height: 3,
+  width: 18,
+  backgroundColor: theme.palette.common.white,
+  position: 'absolute',
+  bottom: -2,
+  left: 'calc(50% - 9px)',
+  transition: theme.transitions.create('opacity'),
+}));
+
 
 const ViewUsers = () => {
   const navigate = useNavigate();
@@ -57,13 +170,22 @@ const ViewUsers = () => {
   const [userRoles, setUserRoles] = useState([]);
   const [rows, setRows] = useState(initialRows);
   const [loadingTable, setLoadingTable] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [regionalsOpt, setRegionalsOpt] = useState<IRegionalApiData[]>([]);
+  const [userType, setUserType] = useState("[User Type]");
 
   useEffect(() => {
     getUserRolesArray();
     if(sessionStorage.length > 0){
       const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
       setToken(jwtToken);
-      getUsers(jwtToken);
+      (async () => {
+        setLoadingTable(true);
+        const regionals:IRegionalApiData[] = await getRegionalsInfo(jwtToken);
+        setLoadingTable(false);
+        setRegionalsOpt(regionals);
+        return;
+      })();
     }
     else{
       setWaiting(false);
@@ -92,19 +214,50 @@ const ViewUsers = () => {
     setUserRoles(roles);
   }
 
-  const getUsers = async (jwtToken:string) => {
+  const getUsers = async (event:React.MouseEvent<HTMLButtonElement, MouseEvent>, rol?:string) => {
+    setShowModal(true);
+    setUsersState([]);
+    setRows([]);
     setLoadingTable(true);
-    const asesoresComerciales:IUserApiData[] = await getComercialAdvisors(jwtToken);
-    const directoresRegional:IUserApiData[] = await getRegionalDirectors(jwtToken);
-    const directoresTecnicos:IUserApiData[] = await getTechnicalDirectors(jwtToken);
-    const inspectores:IUserApiData[] = await getInspectors(jwtToken);
-    const programadoresAgenda:IUserApiData[] = await getScheduleProgrammers(jwtToken);
+    const name = event ? event.currentTarget.name : "";
+    const value = event ? event.currentTarget.value : rol && rol.length > 0 ? rol : "";
+    const image = images && images.length > 0 && images.filter(image => image.rol === value)[0];
+    setUserType(image.title);
+    
+    let totalUsers:IUserApiData[] = [];
 
-    const totalUsers:IUserApiData[] = [...asesoresComerciales, ...directoresRegional, ...directoresTecnicos, ...inspectores, ...programadoresAgenda];
+    switch (value) {
+      case apiUserRoles.asesorComercial:
+        const asesoresComerciales:IUserApiData[] = await getComercialAdvisors(token);
+        totalUsers = [...asesoresComerciales];
+        break;
+      case apiUserRoles.directorRegional:
+        const directoresRegional:IUserApiData[] = await getRegionalDirectors(token);
+        totalUsers = [...directoresRegional];
+        break;
+      case apiUserRoles.directorTecnico:
+        const directoresTecnicos:IUserApiData[] = await getTechnicalDirectors(token);
+        totalUsers = [...directoresTecnicos];
+        break;
+      case apiUserRoles.inspector:
+        const inspectores:IUserApiData[] = await getInspectors(token);
+        totalUsers = [...inspectores];
+        break;
+      case apiUserRoles.programadorAgenda:
+        const programadoresAgenda:IUserApiData[] = await getScheduleProgrammers(token);
+        totalUsers = [...programadoresAgenda];
+        break;
+    
+      default:
+        break;
+    }
+    
     setUsersState(totalUsers);
     setRows(totalUsers);
     setLoadingTable(false);
   }
+
+  const handleCloseModal = () => setShowModal(false);
 
   const handleRowEditStop: GridEventListener<'rowEditStop'> = (params, event) => {
     if (params.reason === GridRowEditStopReasons.rowFocusOut) {
@@ -116,11 +269,152 @@ const ViewUsers = () => {
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
   };
 
-  const handleSaveClick = (id: GridRowId) => () => {
+  const handleRegionalUserSelector = async (rowInfo:GridValueGetterParams, selectedRegionalId:SelectChangeEvent<number>) => {
+    setLoadingTable(true);
+
+    const userInfo:IUserApiData = rowInfo.row;
+    userInfo.regional = parseInt(selectedRegionalId.toString());
+
+    if(sessionStorage.length > 0){
+      const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
+      
+      try{
+        switch (userInfo.rol) {
+          case apiUserRoles.asesorComercial:
+            const asesorComercial:IUserApiData = await sendPut(`${API_GESTION_INSPECCIONES_URL}/${COMMERCIAL_ADVISORS}/update`, userInfo, jwtToken);
+            break;
+          case apiUserRoles.directorRegional:
+            const directorRegional:IUserApiData = await sendPut(`${API_GESTION_INSPECCIONES_URL}/${REGIONAL_DIRECTORS}/update`, userInfo, jwtToken);
+            break;
+          case apiUserRoles.directorTecnico:
+            const directorTecnico:IUserApiData = await sendPut(`${API_GESTION_INSPECCIONES_URL}/${TECHNICAL_DIRECTORS}/update`, userInfo, jwtToken);
+            break;
+          case apiUserRoles.inspector:
+            const inspector:IUserApiData = await sendPut(`${API_GESTION_INSPECCIONES_URL}/${INSPECTORS}/update`, userInfo, jwtToken);
+            break;
+          default:
+            break;
+        }
+
+        getUsers(null, userInfo.rol);
+      }
+      catch(rejected){
+        setLoadingTable(false);
+        Swal.fire({
+          title: "Error de conexión",
+          text: `No se pudo actualizar la información, verificar conexión a internet o comunicate con nosotros.`,
+          icon: 'error'
+        })
+      }
+    }
+    else{
+      setLoadingTable(false);
+      Swal.fire({
+        title: 'Expiró la sesión',
+        text: `La sesión expiró, debe volver a iniciar sesión`,
+        icon: 'info',
+        confirmButtonText: "Iniciar sesión"
+      })
+      .then(option => {
+        if(option.isConfirmed){
+          Swal.close();
+          navigate(`../${adminLoginPath}`);
+        }
+        else
+          setTimeout(() => {
+            Swal.close();
+            navigate(`../${adminLoginPath}`);
+          }, 5000);
+      })
+    }
+  };
+
+  const handleSaveClick = (id: GridRowId, row:IUserApiData) => () => {
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
   };
 
-  const handleDeleteClick = (id: GridRowId) => () => {
+  const getUserByIdAndRol = async (jwtToken:string, userId:number, rol:string): Promise<IUserApiData> => {
+    return new Promise<any>(async (resolve, reject) => {
+      try {
+        switch (rol) {
+          case apiUserRoles.asesorComercial:
+            const asesorComercial:IUserApiData = await sendGet(`${API_GESTION_INSPECCIONES_URL}/asesores-comerciales/id/${userId}`, jwtToken);
+            resolve(asesorComercial);
+            break;
+          case apiUserRoles.directorRegional:
+            const directorRegional:IUserApiData = await sendGet(`${API_GESTION_INSPECCIONES_URL}/directores-regional/id/${userId}`, jwtToken);
+            resolve(directorRegional);
+            break;
+          case apiUserRoles.directorTecnico:
+            const directorTecnico:IUserApiData = await sendGet(`${API_GESTION_INSPECCIONES_URL}/directores-tecnicos/id/${userId}`, jwtToken);
+            resolve(directorTecnico);
+            break;
+          case apiUserRoles.inspector:
+            const inspector:IUserApiData = await sendGet(`${API_GESTION_INSPECCIONES_URL}/inspectores/id/${userId}`, jwtToken);
+            resolve(inspector);
+            break;
+          case apiUserRoles.programadorAgenda:
+            const programadorAgenda:IUserApiData = await sendGet(`${API_GESTION_INSPECCIONES_URL}/programador-agenda/id/${userId}`, jwtToken);
+            resolve(programadorAgenda);
+            break;
+          default:
+            break;
+        }
+      }
+      catch (error) {
+        Swal.fire({
+          title: "Error de conexión",
+          text: `No se pudo obtener información, verificar conexión a internet o comunicate con nosotros.`,
+          icon: 'error'
+        })
+        resolve([]);
+      }
+    })  
+    
+  }
+
+  const deleteUserByIdAndRol = async (userId:number, rol:string) => {
+    setWaiting(true);
+
+    try{
+      switch (rol) {
+        case apiUserRoles.asesorComercial:
+          const asesorComercial:IUserApiData = await sendDelete(`${API_GESTION_INSPECCIONES_URL}/${COMMERCIAL_ADVISORS}/delete`, userId, token);
+          break;
+        case apiUserRoles.directorRegional:
+          const directorRegional:IUserApiData = await sendDelete(`${API_GESTION_INSPECCIONES_URL}/${REGIONAL_DIRECTORS}/delete`, userId, token);
+          break;
+        case apiUserRoles.directorTecnico:
+          const directorTecnico:IUserApiData = await sendDelete(`${API_GESTION_INSPECCIONES_URL}/${TECHNICAL_DIRECTORS}/delete`, userId, token);
+          break;
+        case apiUserRoles.inspector:
+          const inspector:IUserApiData = await sendDelete(`${API_GESTION_INSPECCIONES_URL}/${INSPECTORS}/delete`, userId, token);
+          break;
+        case apiUserRoles.programadorAgenda:
+          const programadorAgenda:IUserApiData = await sendDelete(`${API_GESTION_INSPECCIONES_URL}/${SCHEDULE_PROGRAMMERS}/delete`, userId, token);
+          break;
+        default:
+          break;
+      }
+
+      await getUsers(null, rol);
+      setWaiting(false);
+    }
+    catch(rejected){
+      setWaiting(false);
+      Swal.fire({
+        title: "Error de conexión",
+        text: `No se pudo eliminar al usuario, verificar conexión a internet o comunicate con nosotros.`,
+        icon: 'error'
+      })
+    }
+  }
+
+  const handleDeleteClick = (id: GridRowId, rowInfo:GridRowModel) => async () => {
+    const idDelete:number = parseInt(id.toString());
+    const rol:string = rowInfo.rol;
+    await deleteUserByIdAndRol(idDelete, rol);
+
     setRows(rows.filter((row) => row.id !== id));
   };
 
@@ -146,22 +440,49 @@ const ViewUsers = () => {
     setRowModesModel(newRowModesModel);
   };
 
+  
 
   const columns: GridColDef[] = [
-    //{ field: 'id', headerName: 'ID', width: 60, headerAlign:'center', editable:false, hideable:true },
+    { field: 'id', headerName: 'ID', width: 60, headerAlign:'center', align:'center', editable:false, hideable:true },
     { field: 'nombres', headerName: 'Nombres', type:'string', minWidth: 200, maxWidth:500, headerAlign:'center', align:'center', editable:true },
     { field: 'apellidos', headerName: 'Apellidos', type:'string', minWidth: 200, maxWidth:500, headerAlign:'center', align:'center', editable:true },
-    { field: 'email', headerName: 'Email', type:'string', minWidth: 200, maxWidth:300, headerAlign:'center', align:'center', editable:true },
+    { field: 'email', headerName: 'Email', type:'string', minWidth: 300, maxWidth:350, headerAlign:'center', align:'center', editable:true },
     { field: 'telefono', headerName: 'Teléfono', type:'string', minWidth: 150, maxWidth:200, headerAlign:'center', align:'center', editable:true },
-    { field: 'regional', headerName: 'Regional', type:'string', minWidth: 200, maxWidth:350, headerAlign:'center', align:'center', editable:true },
-    { field: 'rol', headerName: 'Rol', type:'singleSelect', valueOptions: userRoles, minWidth: 250, maxWidth:400, headerAlign:'center', align:'center', editable:true },
+    /* { field: 'rol', headerName: 'Rol', type:'string',
+      valueFormatter:(params)=>{
+        return params.value && params.value.length > 0 ? params.value.replace("_", " ") : "";
+      } , 
+      minWidth: 250, maxWidth:400, headerAlign:'center', align:'center', editable:false 
+    }, */
+    {
+      field: 'regional',
+      headerName: 'Regional',
+      minWidth: 200, maxWidth:350, headerAlign:'center', align:'center', editable:false,
+      renderCell: (params: GridValueGetterParams) => (
+        params.row.rol !== apiUserRoles.programadorAgenda ?
+        <Select
+          fullWidth
+          variant='outlined'
+          value={params.row.regional && params.row.regional.id ? params.row.regional.id : undefined}
+          onChange={(event) => handleRegionalUserSelector(params, event.target.value)}
+        >
+          {regionalsOpt && regionalsOpt.length > 0 && regionalsOpt.map((regional:IRegionalApiData, index:number) => (
+            <MenuItem key={index} value={regional.id}>
+              {regional && regional.ciudad ? regional.ciudad : ""}
+            </MenuItem>
+          ))}
+        </Select>
+        :
+        <>No editable</>
+      ),
+    },
     {
       field: 'actions',
       type: 'actions',
       headerName: 'Actions',
       width: 100,
       cellClassName: 'actions',
-      getActions: ({ id }) => {
+      getActions: ({ id, row }) => {
         const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
 
         if (isInEditMode) {
@@ -172,7 +493,7 @@ const ViewUsers = () => {
               sx={{
                 color: 'primary.main',
               }}
-              onClick={handleSaveClick(id)}
+              onClick={handleSaveClick(id, row)}
             />,
             <GridActionsCellItem
               icon={<CancelIcon />}
@@ -195,7 +516,7 @@ const ViewUsers = () => {
           <GridActionsCellItem
             icon={<DeleteIcon />}
             label="Delete"
-            onClick={handleDeleteClick(id)}
+            onClick={handleDeleteClick(id, row)}
             color="inherit"
           />,
         ];
@@ -205,46 +526,108 @@ const ViewUsers = () => {
 
 
   return (
-    <Container maxWidth="xl" sx={{ m:0, p:0 }}>
-      <h2 style={{margin:"10px 0px", textAlign:"center"}}>Ver usuarios</h2>
-      <NavLink style={{ marginBottom: 10 }} to={`../${adminAddUserPath}`}>
-        <Button variant="outlined" color='primary' startIcon={<PersonAddRounded />}>
-          Agregar usuario
-        </Button>
-      </NavLink>
-      <section style={{margin:"10px 0px"}}>
-        <ThemeProvider theme={darkTheme}>
-          <DataGrid
-            sx={{height:"70vh", width:"100%", backgroundColor:"#101418"}}
-            key={ignoreDiacritics.toString()}
-            rows={rows}
-            columns={columns}
-            filterModel={filterModel}
-            onFilterModelChange={setFilterModel}
-            slots={{ toolbar: GridToolbar }}
-            slotProps={{ toolbar: { showQuickFilter: true } }}
-            ignoreDiacritics={ignoreDiacritics}
-            columnVisibilityModel={columnVisibilityModel}
-            onColumnVisibilityModelChange={(newModel) =>
-              setColumnVisibilityModel(newModel)
-            }
-            initialState={{
-              pagination: {
-                paginationModel: { page: 0, pageSize: 10 },
-              },
-            }}
-            pageSizeOptions={[10, 25, 50, 100]}
-            checkboxSelection
-            editMode="row"
-            rowModesModel={rowModesModel}
-            onRowModesModelChange={handleRowModesModelChange}
-            onRowEditStop={handleRowEditStop}
-            processRowUpdate={processRowUpdate}
-            loading={loadingTable}
-          />
-        </ThemeProvider>
-      </section>
-    </Container>
+    <main>
+      <Container maxWidth="xl" sx={{ m:0, p:0 }}>
+        <h2 style={{margin:"10px 0px", textAlign:"center"}}>Ver usuarios</h2>
+        <NavLink style={{ marginBottom: 10 }} to={`../${adminAddUserPath}`}>
+          <Button variant="outlined" color='primary' startIcon={<PersonAddRounded />}>
+            Agregar usuario
+          </Button>
+        </NavLink>
+        <Box sx={{ margin:'10px 0px', display: 'flex', alignItems:'center', justifyContent:'center', gap:2, flexWrap: 'wrap', minWidth: 300, width: '100%' }}>
+          {images.map((image) => (
+            <ImageButton
+              name={image.title}
+              focusRipple
+              key={image.title}
+              style={{
+                width: image.width,
+                borderRadius:5
+              }}
+              onClick={getUsers}
+              value={image.rol}
+            >
+              <ImageSrc style={{ backgroundImage: `url(${image.url})` }} />
+              <ImageBackdrop className="MuiImageBackdrop-root" />
+              <Image>
+                <Typography
+                  component="span"
+                  variant="subtitle1"
+                  color="inherit"
+                  sx={{
+                    position: 'relative',
+                    p: 4,
+                    pt: 2,
+                    pb: (theme) => `calc(${theme.spacing(1)} + 6px)`,
+                  }}
+                >
+                  {image.title}
+                  <ImageMarked className="MuiImageMarked-root" />
+                </Typography>
+              </Image>
+            </ImageButton>
+          ))}
+        </Box>
+        <Modal
+          aria-labelledby="transition-modal-title"
+          aria-describedby="transition-modal-description"
+          open={showModal}
+          onClose={handleCloseModal}
+          closeAfterTransition
+          slots={{ backdrop: Backdrop }}
+          slotProps={{
+            backdrop: {
+              timeout: 500,
+            },
+          }}
+        >
+          <Fade in={showModal}>
+            <Box sx={modalStyle}>
+              <ThemeProvider theme={darkTheme}>
+                <Box sx={{m:0, p:0, display:'flex', alignItems:'center', backgroundColor:"darkslateblue", borderRadius:"10px 10px 0px 0px", color:"white"}}>
+                  <h3 style={{width:"100%", textAlign:'center', margin:0, padding:10}}>{userType}</h3>
+                  <CloseRoundedIcon id="closeModalIcon" onClick={handleCloseModal} />
+                </Box>
+                <DataGrid
+                  sx={{height:"80vh", width:"100%", backgroundColor:"#101418"}}
+                  key={ignoreDiacritics.toString()}
+                  rows={rows}
+                  columns={columns}
+                  filterModel={filterModel}
+                  onFilterModelChange={setFilterModel}
+                  slots={{ toolbar: GridToolbar }}
+                  slotProps={{ toolbar: { showQuickFilter: true } }}
+                  ignoreDiacritics={ignoreDiacritics}
+                  columnVisibilityModel={columnVisibilityModel}
+                  onColumnVisibilityModelChange={(newModel) =>
+                    setColumnVisibilityModel(newModel)
+                  }
+                  initialState={{
+                    pagination: {
+                      paginationModel: { page: 0, pageSize: 10 },
+                    },
+                  }}
+                  pageSizeOptions={[10, 25, 50, 100]}
+                  //checkboxSelection
+                  editMode="row"
+                  rowModesModel={rowModesModel}
+                  onRowModesModelChange={handleRowModesModelChange}
+                  onRowEditStop={handleRowEditStop}
+                  processRowUpdate={processRowUpdate}
+                  loading={loadingTable}
+                />
+              </ThemeProvider>
+            </Box>
+          </Fade>
+        </Modal>
+      </Container>
+      <Backdrop
+        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={waiting}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
+    </main>
   )
 }
 

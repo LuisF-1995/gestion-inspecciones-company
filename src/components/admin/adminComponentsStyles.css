@@ -9,3 +9,12 @@
     align-items: center;
     justify-content: center;
 }
+
+#closeModalIcon{
+    cursor: pointer;
+    padding-right: 15px;
+    scale: 1.2;
+}
+#closeModalIcon:hover{
+    scale: 1.3;
+}

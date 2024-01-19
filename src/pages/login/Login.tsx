@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './login.styles.css';
 import { TextField, Button, MenuItem, FormControl, InputLabel, Select, Box } from '@mui/material';
-import { API_GESTION_INSPECCIONES_URL } from '../../constants/apis';
+import { API_GESTION_INSPECCIONES_URL, COMMERCIAL_ADVISORS, INSPECTORS, REGIONAL_DIRECTORS, SCHEDULE_PROGRAMMERS, TECHNICAL_DIRECTORS } from '../../constants/apis';
 import { sendGet, sendPost } from '../../services/apiRequests';
 import { adminRootPath, adminLoginPath } from '../../constants/routes';
 // MATERIAL UI COMPONENTS
@@ -10,6 +10,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Swal from 'sweetalert2';
 import { NavLink } from 'react-router-dom';
 import { getUserRoles } from '../../services/globalFunctions';
+import { apiUserRoles } from '../../constants/globalConstants';
 
 
 const GeneralLogin = () => {
@@ -72,20 +73,20 @@ const GeneralLogin = () => {
 
   const validateLoginByRol = async(rol:string, body:{email:string, password:string}) => {
     switch (rol) {
-      case "INSPECTOR":
-        const loginInspectorResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/inspectores/login`, body);
+      case apiUserRoles.inspector:
+        const loginInspectorResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/${INSPECTORS}/login`, body);
         return loginInspectorResponse;
-      case "ASESOR_COMERCIAL":
-        const loginAsesorResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/asesores-comerciales/login`, body);
+      case apiUserRoles.asesorComercial:
+        const loginAsesorResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/${COMMERCIAL_ADVISORS}/login`, body);
         return loginAsesorResponse;
-      case "DIRECTOR_REGIONAL":
-        const loginDirRegionalResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/directores-regional/login`, body);
+      case apiUserRoles.directorRegional:
+        const loginDirRegionalResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/${REGIONAL_DIRECTORS}/login`, body);
         return loginDirRegionalResponse;
-      case "DIRECTOR_TECNICO":
-        const loginDirTecnicoResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/directores-tecnicos/login`, body);
+      case apiUserRoles.directorTecnico:
+        const loginDirTecnicoResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/${TECHNICAL_DIRECTORS}/login`, body);
         return loginDirTecnicoResponse;
-      case "PROGRAMADOR_AGENDA":
-        const loginProgramadorResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/programador-agenda/login`, body);
+      case apiUserRoles.programadorAgenda:
+        const loginProgramadorResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/${SCHEDULE_PROGRAMMERS}/login`, body);
         return loginProgramadorResponse;
         
       default:

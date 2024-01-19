@@ -1,7 +1,7 @@
 import Swal from "sweetalert2";
-import { API_GESTION_INSPECCIONES_URL } from "../constants/apis";
+import { API_GESTION_INSPECCIONES_URL, COMMERCIAL_ADVISORS, INSPECTORS, REGIONAL_DIRECTORS, SCHEDULE_PROGRAMMERS, TECHNICAL_DIRECTORS } from "../constants/apis";
 import { sendGet } from "./apiRequests";
-import { IUserApiData } from "../components/Interfaces";
+import { IRegionalApiData, IUserApiData } from "../components/Interfaces";
 
 export const getUserRoles = async():Promise<any> => {
   return new Promise<any>(async (resolve, reject) => {
@@ -33,10 +33,35 @@ export const getUserRoles = async():Promise<any> => {
   }) 
 }
 
+export const getRegionalsInfo = async(jwtToken:string): Promise<IRegionalApiData[]> => {
+  return new Promise<any>(async (resolve, reject) => {
+    try {
+      const regionalsInfo = await sendGet(`${API_GESTION_INSPECCIONES_URL}/regionales`, jwtToken);
+
+      if(regionalsInfo.data){
+        const regionalsData:IRegionalApiData[] = regionalsInfo.data;
+        resolve(regionalsData);
+      }
+      else if (regionalsInfo && regionalsInfo.message) {
+        Swal.fire({
+          title: "Error de conexión",
+          text: `${regionalsInfo.message}`,
+          icon: 'error'
+        })
+        resolve([]);
+      }
+    }
+    catch (error) {
+      sessionStorage.clear();
+      resolve([]);
+    }
+  })
+}
+
 export const getComercialAdvisors = (jwtToken:string): Promise<IUserApiData|any> => {
   return new Promise<any>(async (resolve, reject) => {
     try {
-      const comercialAdvisors:any = await sendGet(`${API_GESTION_INSPECCIONES_URL}/asesores-comerciales/all`, jwtToken);
+      const comercialAdvisors:any = await sendGet(`${API_GESTION_INSPECCIONES_URL}/${COMMERCIAL_ADVISORS}/all`, jwtToken);
       if(comercialAdvisors.data){
         const comercialAdvisorsData:IUserApiData[] = comercialAdvisors.data;
         resolve(comercialAdvisorsData);
@@ -64,7 +89,7 @@ export const getComercialAdvisors = (jwtToken:string): Promise<IUserApiData|any>
 export const getRegionalDirectors = (jwtToken:string): Promise<IUserApiData|any> => {
   return new Promise<any>(async (resolve, reject) => {
     try {
-      const regionalDirectors:any = await sendGet(`${API_GESTION_INSPECCIONES_URL}/directores-regional/all`, jwtToken);
+      const regionalDirectors:any = await sendGet(`${API_GESTION_INSPECCIONES_URL}/${REGIONAL_DIRECTORS}/all`, jwtToken);
       if(regionalDirectors.data){
         const regionalDirectorsData:IUserApiData[] = regionalDirectors.data;
         resolve(regionalDirectorsData);
@@ -92,7 +117,7 @@ export const getRegionalDirectors = (jwtToken:string): Promise<IUserApiData|any>
 export const getTechnicalDirectors = (jwtToken:string): Promise<IUserApiData|any> => {
   return new Promise<any>(async (resolve, reject) => {
     try {
-      const technicalDirectors:any = await sendGet(`${API_GESTION_INSPECCIONES_URL}/directores-tecnicos/all`, jwtToken);
+      const technicalDirectors:any = await sendGet(`${API_GESTION_INSPECCIONES_URL}/${TECHNICAL_DIRECTORS}/all`, jwtToken);
       if(technicalDirectors.data){
         const technicalDirectorsData:IUserApiData[] = technicalDirectors.data;
         resolve(technicalDirectorsData);
@@ -120,7 +145,7 @@ export const getTechnicalDirectors = (jwtToken:string): Promise<IUserApiData|any
 export const getInspectors = (jwtToken:string): Promise<IUserApiData|any> => {
   return new Promise<any>(async (resolve, reject) => {
     try {
-      const inspectors:any = await sendGet(`${API_GESTION_INSPECCIONES_URL}/inspectores`, jwtToken);
+      const inspectors:any = await sendGet(`${API_GESTION_INSPECCIONES_URL}/${INSPECTORS}`, jwtToken);
       if(inspectors.data){
         const inspectorsData:IUserApiData[] = inspectors.data;
         resolve(inspectorsData);
@@ -148,7 +173,7 @@ export const getInspectors = (jwtToken:string): Promise<IUserApiData|any> => {
 export const getScheduleProgrammers = (jwtToken:string): Promise<IUserApiData|any> => {
   return new Promise<any>(async (resolve, reject) => {
     try {
-      const scheduleProgrammers:any = await sendGet(`${API_GESTION_INSPECCIONES_URL}/programador-agenda/all`, jwtToken);
+      const scheduleProgrammers:any = await sendGet(`${API_GESTION_INSPECCIONES_URL}/${SCHEDULE_PROGRAMMERS}/all`, jwtToken);
       if(scheduleProgrammers.data){
         const programmersData:IUserApiData[] = scheduleProgrammers.data;
         resolve(programmersData);
