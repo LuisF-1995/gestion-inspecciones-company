@@ -210,6 +210,18 @@ const ViewUsers = () => {
     }
   }, [])
 
+  const columnVisibilityModelChange = useMemo(() => {
+    const typeUser = images.length > 0 && images.filter(image => image.title === userType)[0];
+    if (typeUser && (typeUser.rol === apiUserRoles.programadorAgenda || typeUser.rol === apiUserRoles.directorTecnico)) {
+      setColumnVisibilityModel({
+        regional:false
+      })
+    }
+    else{
+      setColumnVisibilityModel({})
+    }
+  }, [userType]);
+
   const getUserRolesArray = async() => {
     const roles = await getUserRoles();
     setUserRoles(roles);
@@ -427,18 +439,6 @@ const ViewUsers = () => {
     setRowModesModel(newRowModesModel);
   };
 
-  const columnVisibilityModelChange = useMemo(() => {
-    const typeUser = images.length > 0 && images.filter(image => image.title === userType)[0];
-    if (typeUser && typeUser.rol === apiUserRoles.programadorAgenda) {
-      setColumnVisibilityModel({
-        regional:false
-      })
-    }
-    else{
-      setColumnVisibilityModel({})
-    }
-  }, [userType]);
-
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 60, headerAlign:'center', align:'center', editable:false, hideable:true },
     { field: 'nombres', headerName: 'Nombres', type:'string', minWidth: 200, maxWidth:500, headerAlign:'center', align:'center', editable:true,
@@ -532,6 +532,19 @@ const ViewUsers = () => {
           )
         }
       }
+    },
+    { field: 'competencias', headerName: 'Competencias', type:'string', minWidth: 150, maxWidth:200, headerAlign:'center', align:'center', editable:true,
+      renderEditCell: (params:GridRenderEditCellParams) => (
+        <TextField
+          fullWidth
+          type='string'
+          name={params.field}
+          id="editCompetences"
+          label=""
+          value={params.formattedValue}
+          onChange={(event:React.ChangeEvent<HTMLInputElement>) => handleUserChanges(params, event)}
+        />
+      )
     },
     {
       field: 'actions',

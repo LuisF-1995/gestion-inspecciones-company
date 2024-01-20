@@ -6,7 +6,7 @@ import { localTokenKeyName, localUserIdKeyName } from '../../constants/globalCon
 import { AppBar, Avatar, Backdrop, Box, Button, CircularProgress, Container, Divider, IconButton, ListItemIcon, Menu, MenuItem, ThemeProvider, Toolbar, Tooltip, Typography, createTheme } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
-import { adminPortalPath, adminLoginPath, adminProfilePath, adminUsersPath, adminCompetencesPath, adminRegionalsPath, adminAddUserPath, adminAddRegionalPath } from '../../constants/routes'
+import { adminPortalPath, adminLoginPath, adminProfilePath, adminUsersPath, adminCompetencesPath, adminRegionalsPath, adminAddUserPath, adminAddRegionalPath, adminAddCompetencePath } from '../../constants/routes'
 import Swal from 'sweetalert2'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Logout } from '@mui/icons-material'
@@ -31,12 +31,22 @@ const AdminHome = () => {
         {
           name: usersPageName,
           path: `${adminUsersPath}`,
-          items: []
+          items: [
+            {
+              name: "Agregar",
+              path: `${adminAddUserPath}`,
+            },
+          ]
         },
         {
           name: competencesPageName,
           path: `${adminCompetencesPath}`,
-          items: []
+          items: [
+            {
+              name: "Agregar",
+              path: `${adminAddCompetencePath}`,
+            },
+          ]
         },
         {
           name: regionalsPageName,
