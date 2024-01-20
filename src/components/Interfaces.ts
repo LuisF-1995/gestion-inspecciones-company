@@ -5,7 +5,7 @@ export interface IUserApiData{
     email?:string;
     password?:string;
     telefono?:string;
-    regional?:number|undefined;
+    regional?:number|undefined|IRegionalApiData;
     rol?:string
 }
 

@@ -6,8 +6,8 @@ import { sendDelete, sendGet, sendPost, sendPut } from '../../services/apiReques
 import { API_GESTION_INSPECCIONES_URL } from '../../constants/apis';
 import Swal from 'sweetalert2';
 import { IRegionalApiData, IUserApiData } from '../Interfaces';
-import { Backdrop, Button, CircularProgress, Container, MenuItem, Select, SelectChangeEvent, ThemeProvider, createTheme } from '@mui/material';
-import { DataGrid, GridActionsCellItem, GridColDef, GridColumnVisibilityModel, GridEventListener, GridFilterModel, GridRowEditStopReasons, GridRowId, GridRowModel, GridRowModes, GridRowModesModel, GridRowsProp, GridToolbar, GridValueGetterParams } from '@mui/x-data-grid';
+import { Backdrop, Button, CircularProgress, Container, MenuItem, Select, SelectChangeEvent, TextField, ThemeProvider, createTheme } from '@mui/material';
+import { DataGrid, GridActionsCellItem, GridColDef, GridColumnVisibilityModel, GridEventListener, GridFilterModel, GridRenderEditCellParams, GridRowEditStopReasons, GridRowId, GridRowModel, GridRowModes, GridRowModesModel, GridRowsProp, GridToolbar, GridValueGetterParams } from '@mui/x-data-grid';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
@@ -208,6 +208,17 @@ const ViewRegionals = () => {
     }
   };
 
+  const handleRegionalChanges = (rowInfo:GridRenderEditCellParams, event:React.ChangeEvent<HTMLInputElement>) => {
+    const eventValue:string|number = event.target.value;
+    const eventName:string = event.target.name;
+    const userInfo:IRegionalApiData = rowInfo.row;
+
+    const updateRegional:IUserApiData = rows.length > 0 && rows.filter((user:IUserApiData) => user.id === userInfo.id)[0];
+    updateRegional[eventName] = eventValue && eventValue.length > 0 ? eventValue : "";
+
+    processRowUpdate(updateRegional);
+  };
+
   const updateRegionalDirector = async (jwtToken:string, dataUpdate:IUserApiData) => {
     setWaiting(true);
 
@@ -244,6 +255,7 @@ const ViewRegionals = () => {
     try{
       const regionalUpdateResponse:IRegionalApiData|any|null = await sendPut(`${API_GESTION_INSPECCIONES_URL}/regionales/update`, data, token);
       setWaiting(false);
+      window.location.reload();
     }
     catch(rejected){
       setWaiting(false);
@@ -266,7 +278,6 @@ const ViewRegionals = () => {
     
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
   };
-
 
   const deleteRegionalById = async (id:number) => {
     setWaiting(true);
@@ -317,7 +328,19 @@ const ViewRegionals = () => {
 
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', type:'number', width: 60, headerAlign:'center', editable:false, hideable:true },
-    { field: 'ciudad', headerName: 'Ciudad', type:'string', minWidth: 200, maxWidth:500, headerAlign:'center', align:'center', editable:true },
+    { field: 'ciudad', headerName: 'Ciudad', type:'string', minWidth: 200, maxWidth:500, headerAlign:'center', align:'center', editable:true,
+      renderEditCell: (params:GridRenderEditCellParams) => (
+        <TextField
+          fullWidth
+          type='text'
+          name={params.field}
+          id="editCity"
+          label=""
+          value={params.formattedValue}
+          onChange={(event:React.ChangeEvent<HTMLInputElement>) => handleRegionalChanges(params, event)}
+        />
+      )
+    },
     {
       field: 'directorRegional',
       headerName: 'Director Regional',
@@ -325,6 +348,7 @@ const ViewRegionals = () => {
       renderCell: (params: GridValueGetterParams) => (
         <Select
           fullWidth
+          name={params.field}
           variant='outlined'
           value={params.row.directorRegional ? params.row.directorRegional.id : ""}
           onChange={(e) => handleRegionalDirectorSelector(params.row.id, e.target.value)}

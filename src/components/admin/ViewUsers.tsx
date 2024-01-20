@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   DataGrid,
   GridToolbar,
@@ -14,6 +14,7 @@ import {
   GridRowId,
   GridRowModel,
   GridValueGetterParams,
+  GridRenderEditCellParams,
 } from '@mui/x-data-grid';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
@@ -21,7 +22,7 @@ import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { Backdrop, Box, Button, ButtonBase, CircularProgress, Container, Fade, MenuItem, Modal, Select, SelectChangeEvent, ThemeProvider, Typography, createTheme, styled } from '@mui/material';
+import { Backdrop, Box, Button, ButtonBase, CircularProgress, Container, Fade, MenuItem, Modal, Select, SelectChangeEvent, TextField, ThemeProvider, Typography, createTheme, styled } from '@mui/material';
 import { getComercialAdvisors, getInspectors, getRegionalDirectors, getRegionalsInfo, getScheduleProgrammers, getTechnicalDirectors, getUserRoles } from '../../services/globalFunctions';
 import { API_GESTION_INSPECCIONES_URL, COMMERCIAL_ADVISORS, INSPECTORS, REGIONAL_DIRECTORS, SCHEDULE_PROGRAMMERS, TECHNICAL_DIRECTORS } from '../../constants/apis';
 import { NavLink, useNavigate } from 'react-router-dom';
@@ -93,13 +94,13 @@ const ImageButton = styled(ButtonBase)(({ theme }) => ({
   position: 'relative',
   height: 200,
   [theme.breakpoints.down('sm')]: {
-    width: '100% !important', // Overrides inline-style
+    width: '90% !important', // Overrides inline-style
     height: 150,
   },
   '&:hover, &.Mui-focusVisible': {
     zIndex: 1,
     '& .MuiImageBackdrop-root': {
-      opacity: 0.15,
+      opacity: 0.3,
     },
     '& .MuiImageMarked-root': {
       opacity: 0,
@@ -139,7 +140,7 @@ const ImageBackdrop = styled('span')(({ theme }) => ({
   top: 0,
   bottom: 0,
   backgroundColor: theme.palette.common.black,
-  opacity: 0.4,
+  opacity: 0.65,
   transition: theme.transitions.create('opacity'),
 }));
 
@@ -269,11 +270,29 @@ const ViewUsers = () => {
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
   };
 
-  const handleRegionalUserSelector = async (rowInfo:GridValueGetterParams, selectedRegionalId:SelectChangeEvent<number>) => {
-    setLoadingTable(true);
-
+  const handleUserChanges = (rowInfo:GridRenderEditCellParams|GridValueGetterParams, event:React.ChangeEvent<HTMLInputElement>) => {
+    const eventValue:string|number = event.target.value;
+    const eventName:string = event.target.name;
     const userInfo:IUserApiData = rowInfo.row;
-    userInfo.regional = parseInt(selectedRegionalId.toString());
+    //const updatedUserArray:IUserApiData[] = [...rows];
+    const updatedUser:IUserApiData = rows.length > 0 && rows.filter((user:IUserApiData) => user.id === userInfo.id)[0];
+    
+    if(eventName === 'regional'){
+      const updatedRegional:IRegionalApiData = regionalsOpt.length > 0 && regionalsOpt.filter(regional => regional.id === parseInt(eventValue))[0];
+      //userInfo.regional = updatedRegional;
+      updatedUser[eventName] = updatedRegional;
+    }
+    else if(updatedUser && updatedUser !== undefined){
+      updatedUser[eventName] = eventValue && eventValue.length > 0 ? eventValue : "";
+    }
+
+    //setUsersState(updatedUserArray);
+    //setRows(updatedUserArray);
+    processRowUpdate(updatedUser);
+  };
+
+  const updateUser = async(userInfo:IUserApiData) => {
+    setLoadingTable(true);
 
     if(sessionStorage.length > 0){
       const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
@@ -291,6 +310,9 @@ const ViewUsers = () => {
             break;
           case apiUserRoles.inspector:
             const inspector:IUserApiData = await sendPut(`${API_GESTION_INSPECCIONES_URL}/${INSPECTORS}/update`, userInfo, jwtToken);
+            break;
+          case apiUserRoles.programadorAgenda:
+            const programadorAgenda:IUserApiData = await sendPut(`${API_GESTION_INSPECCIONES_URL}/${SCHEDULE_PROGRAMMERS}/update`, userInfo, jwtToken);
             break;
           default:
             break;
@@ -327,51 +349,15 @@ const ViewUsers = () => {
           }, 5000);
       })
     }
-  };
-
-  const handleSaveClick = (id: GridRowId, row:IUserApiData) => () => {
-    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
-  };
-
-  const getUserByIdAndRol = async (jwtToken:string, userId:number, rol:string): Promise<IUserApiData> => {
-    return new Promise<any>(async (resolve, reject) => {
-      try {
-        switch (rol) {
-          case apiUserRoles.asesorComercial:
-            const asesorComercial:IUserApiData = await sendGet(`${API_GESTION_INSPECCIONES_URL}/asesores-comerciales/id/${userId}`, jwtToken);
-            resolve(asesorComercial);
-            break;
-          case apiUserRoles.directorRegional:
-            const directorRegional:IUserApiData = await sendGet(`${API_GESTION_INSPECCIONES_URL}/directores-regional/id/${userId}`, jwtToken);
-            resolve(directorRegional);
-            break;
-          case apiUserRoles.directorTecnico:
-            const directorTecnico:IUserApiData = await sendGet(`${API_GESTION_INSPECCIONES_URL}/directores-tecnicos/id/${userId}`, jwtToken);
-            resolve(directorTecnico);
-            break;
-          case apiUserRoles.inspector:
-            const inspector:IUserApiData = await sendGet(`${API_GESTION_INSPECCIONES_URL}/inspectores/id/${userId}`, jwtToken);
-            resolve(inspector);
-            break;
-          case apiUserRoles.programadorAgenda:
-            const programadorAgenda:IUserApiData = await sendGet(`${API_GESTION_INSPECCIONES_URL}/programador-agenda/id/${userId}`, jwtToken);
-            resolve(programadorAgenda);
-            break;
-          default:
-            break;
-        }
-      }
-      catch (error) {
-        Swal.fire({
-          title: "Error de conexión",
-          text: `No se pudo obtener información, verificar conexión a internet o comunicate con nosotros.`,
-          icon: 'error'
-        })
-        resolve([]);
-      }
-    })  
-    
   }
+
+  const handleSaveClick = (id: GridRowId, row:GridRowModel) => async () => {
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+    const userId:number = parseInt(id.toString());
+    delete row.isNew;
+    const userUpdate:IUserApiData = row;
+    await updateUser(userUpdate);
+  };
 
   const deleteUserByIdAndRol = async (userId:number, rol:string) => {
     setWaiting(true);
@@ -411,10 +397,11 @@ const ViewUsers = () => {
   }
 
   const handleDeleteClick = (id: GridRowId, rowInfo:GridRowModel) => async () => {
+    setLoadingTable(true);
     const idDelete:number = parseInt(id.toString());
     const rol:string = rowInfo.rol;
     await deleteUserByIdAndRol(idDelete, rol);
-
+    setLoadingTable(false);
     setRows(rows.filter((row) => row.id !== id));
   };
 
@@ -440,14 +427,72 @@ const ViewUsers = () => {
     setRowModesModel(newRowModesModel);
   };
 
-  
+  const columnVisibilityModelChange = useMemo(() => {
+    const typeUser = images.length > 0 && images.filter(image => image.title === userType)[0];
+    if (typeUser && typeUser.rol === apiUserRoles.programadorAgenda) {
+      setColumnVisibilityModel({
+        regional:false
+      })
+    }
+    else{
+      setColumnVisibilityModel({})
+    }
+  }, [userType]);
 
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 60, headerAlign:'center', align:'center', editable:false, hideable:true },
-    { field: 'nombres', headerName: 'Nombres', type:'string', minWidth: 200, maxWidth:500, headerAlign:'center', align:'center', editable:true },
-    { field: 'apellidos', headerName: 'Apellidos', type:'string', minWidth: 200, maxWidth:500, headerAlign:'center', align:'center', editable:true },
-    { field: 'email', headerName: 'Email', type:'string', minWidth: 300, maxWidth:350, headerAlign:'center', align:'center', editable:true },
-    { field: 'telefono', headerName: 'Teléfono', type:'string', minWidth: 150, maxWidth:200, headerAlign:'center', align:'center', editable:true },
+    { field: 'nombres', headerName: 'Nombres', type:'string', minWidth: 200, maxWidth:500, headerAlign:'center', align:'center', editable:true,
+      renderEditCell: (params:GridRenderEditCellParams) => (
+        <TextField
+          fullWidth
+          type='text'
+          name={params.field}
+          id="editNames"
+          label=""
+          value={params.formattedValue}
+          onChange={(event:React.ChangeEvent<HTMLInputElement>) => handleUserChanges(params, event)}
+        />
+      )
+    },
+    { field: 'apellidos', headerName: 'Apellidos', type:'string', minWidth: 200, maxWidth:500, headerAlign:'center', align:'center', editable:true,
+      renderEditCell: (params:GridRenderEditCellParams) => (
+        <TextField
+          fullWidth
+          type='text'
+          name={params.field}
+          id="editLastnames"
+          label=""
+          value={params.formattedValue}
+          onChange={(event:React.ChangeEvent<HTMLInputElement>) => handleUserChanges(params, event)}
+        />
+      )
+    },
+    { field: 'email', headerName: 'Email', type:'string', minWidth: 300, maxWidth:350, headerAlign:'center', align:'center', editable:true,
+      renderEditCell: (params:GridRenderEditCellParams) => (
+        <TextField
+          fullWidth
+          type='email'
+          name={params.field}
+          id="editEmail"
+          label=""
+          value={params.formattedValue}
+          onChange={(event:React.ChangeEvent<HTMLInputElement>) => handleUserChanges(params, event)}
+        />
+      )
+    },
+    { field: 'telefono', headerName: 'Teléfono', type:'string', minWidth: 150, maxWidth:200, headerAlign:'center', align:'center', editable:true,
+      renderEditCell: (params:GridRenderEditCellParams) => (
+        <TextField
+          fullWidth
+          type='tel'
+          name={params.field}
+          id="editPhone"
+          label=""
+          value={params.formattedValue}
+          onChange={(event:React.ChangeEvent<HTMLInputElement>) => handleUserChanges(params, event)}
+        />
+      )
+    },
     /* { field: 'rol', headerName: 'Rol', type:'string',
       valueFormatter:(params)=>{
         return params.value && params.value.length > 0 ? params.value.replace("_", " ") : "";
@@ -458,23 +503,35 @@ const ViewUsers = () => {
       field: 'regional',
       headerName: 'Regional',
       minWidth: 200, maxWidth:350, headerAlign:'center', align:'center', editable:false,
-      renderCell: (params: GridValueGetterParams) => (
-        params.row.rol !== apiUserRoles.programadorAgenda ?
-        <Select
-          fullWidth
-          variant='outlined'
-          value={params.row.regional && params.row.regional.id ? params.row.regional.id : undefined}
-          onChange={(event) => handleRegionalUserSelector(params, event.target.value)}
-        >
-          {regionalsOpt && regionalsOpt.length > 0 && regionalsOpt.map((regional:IRegionalApiData, index:number) => (
-            <MenuItem key={index} value={regional.id}>
-              {regional && regional.ciudad ? regional.ciudad : ""}
-            </MenuItem>
-          ))}
-        </Select>
-        :
-        <>No editable</>
-      ),
+      renderCell: (params: GridValueGetterParams) => {
+        const isInEditMode = rowModesModel[params.id]?.mode === GridRowModes.Edit;
+        if(isInEditMode){
+          return(
+            params.row.rol !== apiUserRoles.programadorAgenda ?
+            <Select
+              fullWidth
+              variant='outlined'
+              id='selectRegional'
+              name='regional'
+              value={params.row.regional && params.row.regional.id && regionalsOpt && regionalsOpt.length > 0 ? params.row.regional.id : ''}
+              onChange={(event:React.ChangeEvent<HTMLInputElement>) => handleUserChanges(params, event)}
+            >
+              {regionalsOpt && regionalsOpt.length > 0 && regionalsOpt.map((regional:IRegionalApiData, index:number) => (
+                <MenuItem key={index+regional.id} value={regional.id ? regional.id : ''}>
+                  {regional && regional.ciudad ? regional.ciudad : ""}
+                </MenuItem>
+              ))}
+            </Select>
+            :
+            <>No editable</>
+          )
+        }
+        else{
+          return(
+            <>{params.row.regional && params.row.regional.ciudad ? params.row.regional.ciudad : ""}</>
+          )
+        }
+      }
     },
     {
       field: 'actions',
@@ -559,6 +616,8 @@ const ViewUsers = () => {
                     p: 4,
                     pt: 2,
                     pb: (theme) => `calc(${theme.spacing(1)} + 6px)`,
+                    fontSize:'1.5rem',
+                    fontWeight:600
                   }}
                 >
                   {image.title}
@@ -615,6 +674,7 @@ const ViewUsers = () => {
                   onRowEditStop={handleRowEditStop}
                   processRowUpdate={processRowUpdate}
                   loading={loadingTable}
+                  onProcessRowUpdateError={(error) => {console.error(error)}}
                 />
               </ThemeProvider>
             </Box>
