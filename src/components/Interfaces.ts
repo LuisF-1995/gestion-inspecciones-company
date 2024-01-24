@@ -18,6 +18,7 @@ export interface IRegionalApiData{
 }
 
 export interface ICompetencia{
+    response?: any;
     id?:number;
     competencia?:string;
     inspectores?: IInspector[];

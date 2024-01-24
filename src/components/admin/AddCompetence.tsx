@@ -2,15 +2,17 @@ import { Backdrop, Box, Button, CircularProgress, Container, TextField } from '@
 import React, { useState } from 'react'
 import { localTokenKeyName } from '../../constants/globalConstants';
 import { sendPost } from '../../services/apiRequests';
-import { API_GESTION_INSPECCIONES_URL } from '../../constants/apis';
+import { API_GESTION_INSPECCIONES_URL, COMPETENCES } from '../../constants/apis';
+import { ICompetencia } from '../Interfaces';
+import Swal from 'sweetalert2';
 
 const AddCompetence = () => {
-  const [regional, setRegional] = useState({ciudad:""});
+  const [competence, setCompetence] = useState<ICompetencia>({competencia:""});
   const [waiting, setWaiting] = useState(false);
   
   const handleChange = (event:React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setRegional({
-      ciudad: event.target.value
+    setCompetence({
+      competencia: event.target.value
     });
   }
 
@@ -22,10 +24,23 @@ const AddCompetence = () => {
       const jwtToken = sessionStorage.getItem(localTokenKeyName);
       if(jwtToken){
         try {
-          const regionalsInfo = await sendPost(`${API_GESTION_INSPECCIONES_URL}/regionales/create`, regional, jwtToken);
+          const compentencesInfo:ICompetencia = await sendPost(`${API_GESTION_INSPECCIONES_URL}/${COMPETENCES}/add`, competence, jwtToken);
           setWaiting(false);
-          if(regionalsInfo){
-            window.location.reload();
+          
+          if(compentencesInfo && compentencesInfo.competencia != undefined){
+            setCompetence({competencia:""});
+            Swal.fire({
+              title: "Registro exitoso",
+              text: `Competencia ${compentencesInfo.competencia} se registró exitosamente`,
+              icon: 'success'
+            })
+          }
+          else if(compentencesInfo.response.status != 200){
+            Swal.fire({
+              title: "Ha ocurrido un error",
+              text: `No se pudo registrar la compentecia, favor validar que la competencia no exista`,
+              icon: 'error'
+            })
           }
         }
         catch (error) {
@@ -42,7 +57,7 @@ const AddCompetence = () => {
         <Box>
           <h3 style={{textAlign:"center"}}>Agregar competencias técnicas</h3>
           <form onSubmit={submitForm} style={{display:"flex", justifyContent:"center", gap:5}}>
-            <TextField id="outlined-basic" label="Ciudad" variant="outlined" onChange={handleChange} value={regional.ciudad} required />
+            <TextField id="outlined-basic" label="Competencia" variant="outlined" onChange={handleChange} value={competence.competencia} required />
             <Button type='submit' variant="outlined">Agregar</Button>
           </form>
         </Box>

@@ -1,7 +1,7 @@
 import Swal from "sweetalert2";
-import { API_GESTION_INSPECCIONES_URL, COMMERCIAL_ADVISORS, INSPECTORS, REGIONAL_DIRECTORS, SCHEDULE_PROGRAMMERS, TECHNICAL_DIRECTORS } from "../constants/apis";
+import { API_GESTION_INSPECCIONES_URL, COMMERCIAL_ADVISORS, COMPETENCES, INSPECTORS, REGIONAL_DIRECTORS, SCHEDULE_PROGRAMMERS, TECHNICAL_DIRECTORS } from "../constants/apis";
 import { sendGet } from "./apiRequests";
-import { IRegionalApiData, IUserApiData } from "../components/Interfaces";
+import { ICompetencia, IRegionalApiData, IUserApiData } from "../components/Interfaces";
 
 export const getUserRoles = async():Promise<any> => {
   return new Promise<any>(async (resolve, reject) => {
@@ -31,6 +31,31 @@ export const getUserRoles = async():Promise<any> => {
       resolve([]);
     }
   }) 
+}
+
+export const getCompetencesFromApi = async(jwtToken:string): Promise<ICompetencia[]> => {
+  return new Promise<ICompetencia[]>(async (resolve, reject) => {
+    try {
+      const competencesInfo = await sendGet(`${API_GESTION_INSPECCIONES_URL}/${COMPETENCES}`, jwtToken);
+
+      if(competencesInfo.data){
+        const regionalsData:IRegionalApiData[] = competencesInfo.data;
+        resolve(regionalsData);
+      }
+      else if (competencesInfo && competencesInfo.message) {
+        Swal.fire({
+          title: "Error de conexión",
+          text: `${competencesInfo.message}`,
+          icon: 'error'
+        })
+        resolve([]);
+      }
+    }
+    catch (error) {
+      sessionStorage.clear();
+      resolve([]);
+    }
+  })
 }
 
 export const getRegionalsInfo = async(jwtToken:string): Promise<IRegionalApiData[]> => {

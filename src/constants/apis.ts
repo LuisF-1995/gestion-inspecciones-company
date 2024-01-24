@@ -7,3 +7,4 @@ export const REGIONAL_DIRECTORS = "directores-regional";
 export const TECHNICAL_DIRECTORS = "directores-tecnicos";
 export const INSPECTORS = "inspectores";
 export const SCHEDULE_PROGRAMMERS = "programador-agenda";
+export const COMPETENCES = "competencias";

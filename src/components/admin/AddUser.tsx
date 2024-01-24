@@ -108,6 +108,17 @@ const AddUser = () => {
           text: `El usuario ${userRegistrationResponse.nombres} se registró exitosamente para el rol de ${userRegistrationResponse.rol}`,
           icon: 'success'
         })
+        .then(() => {
+          setUserData({
+            nombres: '',
+            apellidos: '',
+            email:'',
+            password: '',
+            telefono:'',
+            regional: undefined,
+            rol:''
+          });
+        })
       }
       else if(userRegistrationResponse.response.status != 200){
         Swal.fire({
