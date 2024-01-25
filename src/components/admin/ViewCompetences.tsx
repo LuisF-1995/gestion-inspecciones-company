@@ -522,11 +522,17 @@ const ViewCompetences = () => {
                         options={usersOpt.length > 0 ? usersOpt.sort((a, b) => -b.rol.localeCompare(a.rol)) : []}
                         filterOptions={(options, { inputValue }) => {
                           const filteredOptions = options.filter((user) => {
-                            if(user.competencias){
-                              return !user.competencias.some((competencia) => competencia.competencia === competenceSelected.competencia);
+                            if(user.rol === apiUserRoles.inspector && user.competencias){
+                              return !user.competencias.some((competencia) => competencia.competencia === competenceSelected.competencia) && 
+                                      (user.nombres.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(inputValue.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()) || 
+                                       user.apellidos.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(inputValue.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase())
+                                      );
                             }
-                            else if(user.competenciasFirmaDictamenDt){
-                              return !user.competenciasFirmaDictamenDt.some((competencia) => competencia.competencia === competenceSelected.competencia);
+                            else if(user.rol === apiUserRoles.directorTecnico && user.competenciasFirmaDictamenDt){
+                              return !user.competenciasFirmaDictamenDt.some((competencia) => competencia.competencia === competenceSelected.competencia) && 
+                                    (user.nombres.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(inputValue.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()) || 
+                                     user.apellidos.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(inputValue.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase())
+                                    );
                             }
                           });
                           return filteredOptions;

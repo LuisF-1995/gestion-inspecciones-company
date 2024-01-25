@@ -210,17 +210,45 @@ const ViewUsers = () => {
     }
   }, [])
 
-  const columnVisibilityModelChange = useMemo(() => {
+
+  useEffect(() => {
     const typeUser = images.length > 0 && images.filter(image => image.title === userType)[0];
-    if (typeUser && (typeUser.rol === apiUserRoles.programadorAgenda || typeUser.rol === apiUserRoles.directorTecnico)) {
-      setColumnVisibilityModel({
-        regional:false
-      })
+    
+    if(typeUser || typeUser !== undefined){
+      switch (typeUser.rol) {
+        case apiUserRoles.asesorComercial:
+          setColumnVisibilityModel({
+            competencias:false
+          })
+          break;
+        case apiUserRoles.inspector:
+          setColumnVisibilityModel({
+          })
+          break;
+        case apiUserRoles.directorRegional:
+          setColumnVisibilityModel({
+            competencias:false
+          })
+          break;
+        case apiUserRoles.directorTecnico:
+          setColumnVisibilityModel({
+            regional:false
+          })
+          break;
+        case apiUserRoles.programadorAgenda:
+          setColumnVisibilityModel({
+            regional:false,
+            competencias: false
+          })
+          break;
+        default:
+          setColumnVisibilityModel({})
+          break;
+      }
     }
-    else{
-      setColumnVisibilityModel({})
-    }
-  }, [userType]);
+
+  }, [userType])
+  
 
   const getUserRolesArray = async() => {
     const roles = await getUserRoles();
