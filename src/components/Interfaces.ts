@@ -7,6 +7,8 @@ export interface IUserApiData{
     telefono?:string;
     regional?:number|undefined|IRegionalApiData;
     rol?:string
+    competenciasFirmaDictamenDt?: ICompetencia[];
+    competencias?: ICompetencia[];
 }
 
 export interface IRegionalApiData{

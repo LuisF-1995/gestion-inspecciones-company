@@ -1,17 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { NavLink, useNavigate, useParams } from 'react-router-dom';
-import { adminAddCompetencePath, adminAddRegionalPath, adminAddUserPath, adminCompetencesPath, adminLoginPath } from '../../constants/routes';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { adminAddCompetencePath, adminLoginPath } from '../../constants/routes';
 import { apiUserRoles, localTokenKeyName } from '../../constants/globalConstants';
-import { sendDelete, sendGet, sendPost, sendPut } from '../../services/apiRequests';
+import { sendDelete, sendPut } from '../../services/apiRequests';
 import { API_GESTION_INSPECCIONES_URL, COMPETENCES, INSPECTORS, TECHNICAL_DIRECTORS } from '../../constants/apis';
 import { getCompetencesFromApi, getInspectors, getTechnicalDirectors } from '../../services/globalFunctions';
 import Swal from 'sweetalert2';
-import { ICompetencia, IInspector, IRegionalApiData, ITechnicalDirector, IUserApiData } from '../Interfaces';
-import { Accordion, AccordionDetails, AccordionSummary, Autocomplete, Avatar, Backdrop, Box, Button, CircularProgress, Container, Divider, IconButton, List, ListItem, ListItemAvatar, ListItemText, MenuItem, Modal, Select, SelectChangeEvent, TextField, ThemeProvider, Tooltip, Typography, createTheme } from '@mui/material';
-import { DataGrid, GridActionsCellItem, GridColDef, GridColumnVisibilityModel, GridEventListener, GridFilterModel, GridRenderEditCellParams, GridRowEditStopReasons, GridRowId, GridRowModel, GridRowModes, GridRowModesModel, GridRowsProp, GridToolbar, GridValueGetterParams } from '@mui/x-data-grid';
-import SaveIcon from '@mui/icons-material/Save';
-import CancelIcon from '@mui/icons-material/Close';
-import EditIcon from '@mui/icons-material/Edit';
+import { ICompetencia, IInspector, ITechnicalDirector, IUserApiData } from '../Interfaces';
+import { Accordion, AccordionDetails, AccordionSummary, Autocomplete, Avatar, Backdrop, Box, Button, Chip, CircularProgress, Container, Divider, IconButton, Modal, TextField, ThemeProvider, Tooltip, Typography, createTheme } from '@mui/material';
+import { DataGrid, GridActionsCellItem, GridColDef, GridColumnVisibilityModel, GridEventListener, GridFilterModel, GridRowEditStopReasons, GridRowId, GridRowModel, GridRowModesModel, GridRowsProp, GridToolbar } from '@mui/x-data-grid';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import Zoom from '@mui/material/Zoom';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -71,11 +68,16 @@ const ViewCompetences = () => {
   const [token, setToken] = useState("");
   const [competences, setCompetences] = useState<ICompetencia[]>([]);
   const [usersOpt, setUsersOpt] = useState<IUserApiData[]>([]);
-  const [usersSelected, setUsersSelected] = useState<{competence:string, users:IUserApiData[]}>({
-    competence: '',
+  const [usersSelected, setUsersSelected] = useState<{competence:ICompetencia, users:IUserApiData[]}>({
+    competence: null,
     users: []
   });
-  const [competenceSelected, setCompetenceSelected] = useState<string | false>(false);
+  const [competenceSelected, setCompetenceSelected] = useState<ICompetencia>({
+    id:null,
+    competencia:'',
+    inspectores: [],
+    directoresTecnicos: []
+  });
   const competenceActions = {
     edit: 'edit',
     delete: 'delete'
@@ -135,7 +137,20 @@ const ViewCompetences = () => {
     if(jwtToken){
       try {
         const inspectors:IInspector[] = await getInspectors(jwtToken);
+        inspectors.forEach((inspector) => {
+          delete inspector.agendaProyectosInspector;
+          delete inspector.firmaInspector;
+          return(
+            inspector
+          );
+        });
         const technicalDirectors:ITechnicalDirector[] = await getTechnicalDirectors(jwtToken);
+        technicalDirectors.forEach((director) => {
+          delete director.firmaDirectorTecnico;
+          return(
+            director
+          );
+        });
         const totalUsers = [...inspectors, ...technicalDirectors];
         setUsersOpt(totalUsers);
         setLoadingTable(false);
@@ -152,8 +167,17 @@ const ViewCompetences = () => {
     const techicalDirectors = selectedCompetence.directoresTecnicos;
     const inspectors = selectedCompetence.inspectores;
     const engineersWithCompetence = [...techicalDirectors, ...inspectors];
-    setRows(engineersWithCompetence);
-    setCompetenceSelected(isExpanded ? competenceName : false);
+    setRows(inspectors);
+    setCompetenceSelected(isExpanded ? 
+      selectedCompetence 
+      : 
+      {
+        id:null,
+        competencia:'',
+        inspectores: [],
+        directoresTecnicos: []
+      }
+    );
   };
 
   const deleteCompetence = async (competenceId:number) => {
@@ -254,68 +278,126 @@ const ViewCompetences = () => {
   };
 
   const addUsersCompetence = async () => {
-    for (const user of usersSelected.users) {
-      let inspector:IInspector = null;
-      let technicalDirector:ITechnicalDirector = null;
-
+    const competence = usersSelected.competence;
+    if(sessionStorage.length > 0){
+      const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
       setLoadingTable(true);
-
-      if(sessionStorage.length > 0){
-        const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
-        try{
+      const engineersTable:IUserApiData[] = rows.filter(user => user.rol === apiUserRoles.inspector);
+      
+      try{
+        for (const user of usersSelected.users) {
           switch (user.rol) {
             case apiUserRoles.directorTecnico:
-              technicalDirector = user;
-              const directorTecnicoResponse:IUserApiData = await sendPut(`${API_GESTION_INSPECCIONES_URL}/${TECHNICAL_DIRECTORS}/update`, technicalDirector, jwtToken);
+              user.competenciasFirmaDictamenDt.push({id:competence.id});
+              await sendPut(`${API_GESTION_INSPECCIONES_URL}/${TECHNICAL_DIRECTORS}/update`, user, jwtToken);
               break;
             case apiUserRoles.inspector:
-              inspector = user;
-              const inspectorResponse:IUserApiData = await sendPut(`${API_GESTION_INSPECCIONES_URL}/${INSPECTORS}/update`, inspector, jwtToken);
+              user.competencias.push({id:competence.id});
+              const inspectorResponse = await sendPut(`${API_GESTION_INSPECCIONES_URL}/${INSPECTORS}/update`, user, jwtToken);
+              engineersTable.push(user);
               break;
             default:
+              setLoadingTable(false);
               break;
           }
         }
-        catch(rejected){
-          setLoadingTable(false);
-          Swal.fire({
-            title: "Error de conexión",
-            text: `No se pudo actualizar la información, verificar conexión a internet o comunicate con nosotros.`,
-            icon: 'error'
-          })
-        }
+        setUsersSelected({
+          competence: null,
+          users: []
+        });
+        setRows(engineersTable);
+        setLoadingTable(false);
+        getCompetencesInfo(jwtToken);
+        getUsers(jwtToken);
       }
-      else{
+      catch(rejected){
         setLoadingTable(false);
         Swal.fire({
-          title: 'Expiró la sesión',
-          text: `La sesión expiró, debe volver a iniciar sesión`,
-          icon: 'info',
-          confirmButtonText: "Iniciar sesión"
+          title: "Error de conexión",
+          text: `No se pudo actualizar la información, verificar conexión a internet o comunicate con nosotros.`,
+          icon: 'error'
         })
-        .then(option => {
-          if(option.isConfirmed){
+      }
+    }
+    else{
+      setLoadingTable(false);
+      Swal.fire({
+        title: 'Expiró la sesión',
+        text: `La sesión expiró, debe volver a iniciar sesión`,
+        icon: 'info',
+        confirmButtonText: "Iniciar sesión"
+      })
+      .then(option => {
+        if(option.isConfirmed){
+          Swal.close();
+          navigate(`../../${adminLoginPath}`);
+        }
+        else
+          setTimeout(() => {
             Swal.close();
             navigate(`../../${adminLoginPath}`);
-          }
-          else
-            setTimeout(() => {
-              Swal.close();
-              navigate(`../../${adminLoginPath}`);
-            }, 5000);
-        })
-      }
-      
-      if(user.rol === apiUserRoles.inspector){
-        inspector = user;
-      }
-      else if (user.rol === apiUserRoles.directorTecnico){
-        technicalDirector = user;
-      }
+          }, 5000);
+      })
     }
   };
 
-  const handleUserSelectorChange = (value:IUserApiData[], competenceSelected:string) => {
+  const deleteUserCompetence = async (selectedUser:IUserApiData, competenceDelete:ICompetencia) => {
+    setLoadingTable(true);
+
+    const userWithCompetence:IUserApiData = usersOpt.filter(user => user.id === selectedUser.id && user.rol === selectedUser.rol)[0];
+    let userUpdated = userWithCompetence;
+
+    if(sessionStorage.length > 0){
+      const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
+      try{
+        switch (selectedUser.rol) {
+          case apiUserRoles.directorTecnico:
+            userUpdated.competenciasFirmaDictamenDt = userWithCompetence.competenciasFirmaDictamenDt.filter(competence => competence.id !== competenceDelete.id);
+            const directorTecnicoResponse:IUserApiData = await sendPut(`${API_GESTION_INSPECCIONES_URL}/${TECHNICAL_DIRECTORS}/update`, userUpdated, jwtToken);
+            break;
+          case apiUserRoles.inspector:
+            userUpdated.competencias = userWithCompetence.competencias.filter(competence => competence.id !== competenceDelete.id);
+            const inspectorResponse:IUserApiData = await sendPut(`${API_GESTION_INSPECCIONES_URL}/${INSPECTORS}/update`, userUpdated, jwtToken);
+            break;
+          default:
+            break;
+        }
+        setLoadingTable(false);
+        getCompetencesInfo(jwtToken);
+        getUsers(jwtToken);
+      }
+      catch(rejected){
+        setLoadingTable(false);
+        Swal.fire({
+          title: "Error de conexión",
+          text: `No se pudo actualizar la información, verificar conexión a internet o comunicate con nosotros.`,
+          icon: 'error'
+        })
+      }
+    }
+    else{
+      setLoadingTable(false);
+      Swal.fire({
+        title: 'Expiró la sesión',
+        text: `La sesión expiró, debe volver a iniciar sesión`,
+        icon: 'info',
+        confirmButtonText: "Iniciar sesión"
+      })
+      .then(option => {
+        if(option.isConfirmed){
+          Swal.close();
+          navigate(`../../${adminLoginPath}`);
+        }
+        else
+          setTimeout(() => {
+            Swal.close();
+            navigate(`../../${adminLoginPath}`);
+          }, 5000);
+      })
+    }
+  }
+
+  const handleUserSelectorChange = (value:IUserApiData[], competenceSelected:ICompetencia) => {
     setUsersSelected({
       competence: competenceSelected,
       users: value
@@ -338,17 +420,25 @@ const ViewCompetences = () => {
     return updatedRow;
   };
   
-  const handleRemoveUserCompetenceClick = (id: GridRowId, userInfo:IInspector|ITechnicalDirector) => async () => {
-    const idDelete = parseInt(id.toString());
+  const handleRemoveUserCompetenceClick = (id: GridRowId, userInfo:IUserApiData) => async () => {
+    await deleteUserCompetence(userInfo, competenceSelected);
     setRows(rows.filter((row) => row.id !== id));
   };
 
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', type:'number', width: 60, headerAlign:'center', editable:false, hideable:true },
-    { field: 'nombres', headerName: 'Nombres', type:'string', width: 300, headerAlign:'center', editable:false },
-    { field: 'apellidos', headerName: 'Apellidos', type:'string', width: 300, headerAlign:'center', editable:false },
-    { field: 'email', headerName: 'Email', type:'email', width: 200, headerAlign:'center', editable:false },
-    { field: 'rol', headerName: 'Rol', type:'string', width: 200, headerAlign:'center', editable:false },
+    { field: 'nombres', headerName: 'Nombres', type:'string', width: 250, headerAlign:'center', editable:false },
+    { field: 'apellidos', headerName: 'Apellidos', type:'string', width: 250, headerAlign:'center', editable:false },
+    { field: 'email', headerName: 'Email', type:'email', width: 250, headerAlign:'center', editable:false },
+    {
+      field: 'regional',
+      headerName: 'Regional', type:'string',
+      width: 200, headerAlign:'center', align:'center', editable:false, 
+      valueFormatter: (params) => (
+        params.value.ciudad
+      )
+    },
+    //{ field: 'rol', headerName: 'Rol', type:'string', width: 200, headerAlign:'center', editable:false },
     {
       field: 'actions',
       type: 'actions',
@@ -358,9 +448,10 @@ const ViewCompetences = () => {
       getActions: ({ id, row }) => {
         return [
           <GridActionsCellItem
-            icon={<DeleteIcon />}
+            icon={<DeleteIcon color='error' />}
             label="Delete"
             onClick={handleRemoveUserCompetenceClick(id, row)}
+            disabled={loadingTable}
             color="inherit"
           />,
         ];
@@ -387,7 +478,7 @@ const ViewCompetences = () => {
           <ThemeProvider theme={darkTheme}>
             {competences.length > 0 ?
               competences.map((competence:ICompetencia, index:number) => (
-                <Accordion key={competence.competencia + index} expanded={competenceSelected === competence.competencia} onChange={handleAccordionChange(competence)}>
+                <Accordion key={competence.competencia + index} expanded={competenceSelected.competencia === competence.competencia} onChange={handleAccordionChange(competence)}>
                   <AccordionSummary
                     expandIcon={<ExpandMoreIcon />}
                     aria-controls="panel1bh-content"
@@ -429,12 +520,24 @@ const ViewCompetences = () => {
                         id={`select-users-${competence.id}`}
                         sx={{ width: 300 }}
                         options={usersOpt.length > 0 ? usersOpt.sort((a, b) => -b.rol.localeCompare(a.rol)) : []}
+                        filterOptions={(options, { inputValue }) => {
+                          const filteredOptions = options.filter((user) => {
+                            if(user.competencias){
+                              return !user.competencias.some((competencia) => competencia.competencia === competenceSelected.competencia);
+                            }
+                            else if(user.competenciasFirmaDictamenDt){
+                              return !user.competenciasFirmaDictamenDt.some((competencia) => competencia.competencia === competenceSelected.competencia);
+                            }
+                          });
+                          return filteredOptions;
+                        }}
                         groupBy={(user) => user.rol && user.rol.length > 0 && user.rol.replace("_", " ")}
                         getOptionLabel={(option:IUserApiData) => `${option.nombres} ${option.apellidos ? option.apellidos : ''}`}
                         defaultValue={[]}
                         filterSelectedOptions
-                        onChange={(event:React.SyntheticEvent<Element, Event>, newValue) => {handleUserSelectorChange(newValue, competence.competencia)}}
-                        value={usersSelected && usersSelected.competence === competenceSelected ? usersSelected.users : []}
+                        onChange={(event:React.SyntheticEvent<Element, Event>, newValue) => {handleUserSelectorChange(newValue, competence)}}
+                        value={usersSelected.competence && usersSelected.competence.competencia === competenceSelected.competencia ? usersSelected.users : []}
+                        disabled={loadingTable}
                         renderInput={(params) => (
                           <TextField
                             {...params}
@@ -443,38 +546,54 @@ const ViewCompetences = () => {
                           />
                         )}
                       />
-                      <Button variant="outlined" startIcon={<PersonAddRounded />} sx={{m:0}} onClick={addUsersCompetence}>
+                      <Button variant="outlined" startIcon={<PersonAddRounded />} sx={{m:0}} disabled={loadingTable} onClick={addUsersCompetence}>
                         Agregar usuarios
                       </Button>
                     </Box>
-                    <DataGrid
-                      sx={{height:"65vh",  width:"100%", backgroundColor:"#101418"}}
-                      key={ignoreDiacritics.toString()}
-                      rows={rows}
-                      columns={columns}
-                      filterModel={filterModel}
-                      onFilterModelChange={setFilterModel}
-                      slots={{ toolbar: GridToolbar }}
-                      slotProps={{ toolbar: { showQuickFilter: true } }}
-                      ignoreDiacritics={ignoreDiacritics}
-                      columnVisibilityModel={columnVisibilityModel}
-                      onColumnVisibilityModelChange={(newModel) =>
-                        setColumnVisibilityModel(newModel)
+                    <Box>
+                      <Divider variant="fullWidth" sx={{mb:1, mt:1}}>Directores técnicos</Divider>
+                      {competence && competence.directoresTecnicos && competence.directoresTecnicos.length > 0 && 
+                        competence.directoresTecnicos.map((techinalDirector:ITechnicalDirector) => (
+                          <Chip
+                            key={techinalDirector.id}
+                            disabled={loadingTable}
+                            variant='outlined'
+                            label={`${techinalDirector.nombres} ${techinalDirector.apellidos ? techinalDirector.apellidos : ''}`}
+                            onDelete={() => deleteUserCompetence(techinalDirector, competence)}
+                            avatar={<Avatar>{`${techinalDirector.nombres[0]}${techinalDirector.apellidos ? techinalDirector.apellidos[0] : ''}`}</Avatar>}
+                          />
+                        ))
                       }
-                      initialState={{
-                        pagination: {
-                          paginationModel: { page: 0, pageSize: 10 },
-                        },
-                      }}
-                      pageSizeOptions={[10, 25, 50, 100]}
-                      //checkboxSelection
-                      editMode="row"
-                      rowModesModel={rowModesModel}
-                      onRowModesModelChange={handleRowModesModelChange}
-                      onRowEditStop={handleRowEditStop}
-                      processRowUpdate={processRowUpdate}
-                      loading={loadingTable}
-                    />
+                      <Divider variant="fullWidth" sx={{mb:1, mt:1}}>Inspectores</Divider>
+                      <DataGrid
+                        sx={{height:"65vh",  width:"100%", backgroundColor:"#101418"}}
+                        key={ignoreDiacritics.toString()}
+                        rows={rows}
+                        columns={columns}
+                        filterModel={filterModel}
+                        onFilterModelChange={setFilterModel}
+                        slots={{ toolbar: GridToolbar }}
+                        slotProps={{ toolbar: { showQuickFilter: true } }}
+                        ignoreDiacritics={ignoreDiacritics}
+                        columnVisibilityModel={columnVisibilityModel}
+                        onColumnVisibilityModelChange={(newModel) =>
+                          setColumnVisibilityModel(newModel)
+                        }
+                        initialState={{
+                          pagination: {
+                            paginationModel: { page: 0, pageSize: 10 },
+                          },
+                        }}
+                        pageSizeOptions={[10, 25, 50, 100]}
+                        //checkboxSelection
+                        editMode="row"
+                        rowModesModel={rowModesModel}
+                        onRowModesModelChange={handleRowModesModelChange}
+                        onRowEditStop={handleRowEditStop}
+                        processRowUpdate={processRowUpdate}
+                        loading={loadingTable}
+                      />
+                    </Box>
                   </AccordionDetails>
                 </Accordion>
               ))
