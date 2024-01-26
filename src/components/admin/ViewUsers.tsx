@@ -22,14 +22,14 @@ import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { Backdrop, Box, Button, ButtonBase, CircularProgress, Container, Fade, MenuItem, Modal, Select, SelectChangeEvent, TextField, ThemeProvider, Typography, createTheme, styled } from '@mui/material';
+import { Backdrop, Box, Button, ButtonBase, Chip, CircularProgress, Container, Fade, ListItem, MenuItem, Modal, Paper, Select, SelectChangeEvent, TextField, ThemeProvider, Typography, createTheme, styled } from '@mui/material';
 import { getComercialAdvisors, getInspectors, getRegionalDirectors, getRegionalsInfo, getScheduleProgrammers, getTechnicalDirectors, getUserRoles } from '../../services/globalFunctions';
 import { API_GESTION_INSPECCIONES_URL, COMMERCIAL_ADVISORS, INSPECTORS, REGIONAL_DIRECTORS, SCHEDULE_PROGRAMMERS, TECHNICAL_DIRECTORS } from '../../constants/apis';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { adminAddUserPath, adminLoginPath } from '../../constants/routes';
 import { apiUserRoles, localTokenKeyName } from '../../constants/globalConstants';
 import Swal from 'sweetalert2';
-import { IRegionalApiData, IUserApiData } from '../Interfaces';
+import { ICompetencia, IInspector, IRegionalApiData, IUserApiData } from '../Interfaces';
 import { sendDelete, sendGet, sendPut } from '../../services/apiRequests';
 
 
@@ -210,7 +210,6 @@ const ViewUsers = () => {
     }
   }, [])
 
-
   useEffect(() => {
     const typeUser = images.length > 0 && images.filter(image => image.title === userType)[0];
     
@@ -218,27 +217,32 @@ const ViewUsers = () => {
       switch (typeUser.rol) {
         case apiUserRoles.asesorComercial:
           setColumnVisibilityModel({
-            competencias:false
+            competencias:false,
+            competenciasFirmaDictamenDt:false
           })
           break;
         case apiUserRoles.inspector:
           setColumnVisibilityModel({
+            competenciasFirmaDictamenDt:false
           })
           break;
         case apiUserRoles.directorRegional:
           setColumnVisibilityModel({
-            competencias:false
+            competencias:false,
+            competenciasFirmaDictamenDt:false
           })
           break;
         case apiUserRoles.directorTecnico:
           setColumnVisibilityModel({
-            regional:false
+            regional:false,
+            competencias: false,
           })
           break;
         case apiUserRoles.programadorAgenda:
           setColumnVisibilityModel({
             regional:false,
-            competencias: false
+            competencias: false,
+            competenciasFirmaDictamenDt:false
           })
           break;
         default:
@@ -298,7 +302,10 @@ const ViewUsers = () => {
     setLoadingTable(false);
   }
 
-  const handleCloseModal = () => setShowModal(false);
+  const handleCloseModal = () => {
+    setRowModesModel({});
+    setShowModal(false);
+  };
 
   const handleRowEditStop: GridEventListener<'rowEditStop'> = (params, event) => {
     if (params.reason === GridRowEditStopReasons.rowFocusOut) {
@@ -357,7 +364,6 @@ const ViewUsers = () => {
           default:
             break;
         }
-
         getUsers(null, userInfo.rol);
       }
       catch(rejected){
@@ -393,7 +399,6 @@ const ViewUsers = () => {
 
   const handleSaveClick = (id: GridRowId, row:GridRowModel) => async () => {
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
-    const userId:number = parseInt(id.toString());
     delete row.isNew;
     const userUpdate:IUserApiData = row;
     await updateUser(userUpdate);
@@ -466,6 +471,60 @@ const ViewUsers = () => {
   const handleRowModesModelChange = (newRowModesModel: GridRowModesModel) => {
     setRowModesModel(newRowModesModel);
   };
+
+  const deleteUserCompetence = async (selectedUser:IUserApiData, competenceDelete:ICompetencia) => {
+    setLoadingTable(true);
+    setRowModesModel({ ...rowModesModel, [selectedUser.id]: { mode: GridRowModes.View } });
+    let userUpdated = selectedUser;
+
+    if(sessionStorage.length > 0){
+      const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
+      try{
+        switch (selectedUser.rol) {
+          case apiUserRoles.directorTecnico:
+            userUpdated.competenciasFirmaDictamenDt = selectedUser.competenciasFirmaDictamenDt.filter(competence => competence.id !== competenceDelete.id);
+            const directorTecnicoResponse:IUserApiData = await sendPut(`${API_GESTION_INSPECCIONES_URL}/${TECHNICAL_DIRECTORS}/update`, userUpdated, jwtToken);
+            break;
+          case apiUserRoles.inspector:
+            userUpdated.competencias = selectedUser.competencias.filter(competence => competence.id !== competenceDelete.id);
+            const inspectorResponse:IUserApiData = await sendPut(`${API_GESTION_INSPECCIONES_URL}/${INSPECTORS}/update`, userUpdated, jwtToken);
+            break;
+          default:
+            break;
+        }
+        processRowUpdate(userUpdated);
+        setLoadingTable(false);
+      }
+      catch(rejected){
+        setLoadingTable(false);
+        Swal.fire({
+          title: "Error de conexión",
+          text: `No se pudo actualizar la información, verificar conexión a internet o comunicate con nosotros.`,
+          icon: 'error'
+        })
+      }
+    }
+    else{
+      setLoadingTable(false);
+      Swal.fire({
+        title: 'Expiró la sesión',
+        text: `La sesión expiró, debe volver a iniciar sesión`,
+        icon: 'info',
+        confirmButtonText: "Iniciar sesión"
+      })
+      .then(option => {
+        if(option.isConfirmed){
+          Swal.close();
+          navigate(`../../${adminLoginPath}`);
+        }
+        else
+          setTimeout(() => {
+            Swal.close();
+            navigate(`../../${adminLoginPath}`);
+          }, 5000);
+      })
+    }
+  }
 
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 60, headerAlign:'center', align:'center', editable:false, hideable:true },
@@ -561,17 +620,102 @@ const ViewUsers = () => {
         }
       }
     },
-    { field: 'competencias', headerName: 'Competencias', type:'string', minWidth: 150, maxWidth:200, headerAlign:'center', align:'center', editable:true,
+    { field: 'competenciasFirmaDictamenDt', headerName: 'Competencias', width:200, headerAlign:'center', align:'center', editable:true,
+      renderCell: (params:GridValueGetterParams) => (
+        <Paper
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+            listStyle: 'none',
+            overflow: 'auto',
+            p: 0,
+            m: 0.2,
+            maxHeight: '100px',
+            background:'none'
+          }}
+          component="ul"
+        >
+          {params && params.row && params.row.rol === apiUserRoles.directorTecnico && params.row.competenciasFirmaDictamenDt.length > 0 &&
+            params.row.competenciasFirmaDictamenDt.map((competenceDt:ICompetencia) => (
+                <Chip key={"view" + competenceDt.id} sx={{m:0.2}} size='medium' label={competenceDt.competencia} variant="outlined" />
+            ))
+          }
+        </Paper>
+      ),
       renderEditCell: (params:GridRenderEditCellParams) => (
-        <TextField
-          fullWidth
-          type='string'
-          name={params.field}
-          id="editCompetences"
-          label=""
-          value={params.formattedValue}
-          onChange={(event:React.ChangeEvent<HTMLInputElement>) => handleUserChanges(params, event)}
-        />
+        <Paper
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+            listStyle: 'none',
+            overflow: 'auto',
+            p: 0,
+            m: 0.2,
+            maxHeight: '100px',
+            background:'none'
+          }}
+          component="ul"
+        >
+          {params && params.row && params.row.rol === apiUserRoles.directorTecnico && params.row.competenciasFirmaDictamenDt.length > 0 &&
+            params.row.competenciasFirmaDictamenDt.map((competenceDt:ICompetencia) => (
+              <Chip key={"edit"+competenceDt.id} label={competenceDt.competencia} variant="outlined" size='medium' sx={{m:0.2}}
+                onDelete={() => deleteUserCompetence(params.row, competenceDt)}
+                disabled={loadingTable}
+              />
+            ))
+          }
+        </Paper>
+      )
+    },
+    { field: 'competencias', headerName: 'Competencias', type:'string', width:200, headerAlign:'center', align:'center', editable:true,
+      renderCell: (params:GridValueGetterParams) => (
+        <Paper
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+            listStyle: 'none',
+            overflow: 'auto',
+            p: 0,
+            m: 0.2,
+            maxHeight: '100px',
+            background:'none'
+          }}
+          component="ul"
+        >
+          {params && params.row && params.row.rol === apiUserRoles.inspector && params.row.competencias.length > 0 &&
+            params.row.competencias.map((competenceInsp:ICompetencia) => (
+              <Chip key={"view" + competenceInsp.id} sx={{m:0.2}} size='medium' label={competenceInsp.competencia} variant="outlined" />
+            ))
+          }
+        </Paper>
+      ),
+      renderEditCell: (params:GridRenderEditCellParams) => (
+        <Paper
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+            listStyle: 'none',
+            overflow: 'auto',
+            p: 0,
+            m: 0.2,
+            maxHeight: '100px',
+            background:'none'
+          }}
+          component="ul"
+        >
+          {params && params.row && params.row.rol === apiUserRoles.inspector && params.row.competencias.length > 0 &&
+            params.row.competencias.map((competenceInsp:ICompetencia) => (
+              <Chip key={"edit" + competenceInsp.id} label={competenceInsp.competencia} variant="outlined" size='medium' sx={{m:0.2}}
+                onDelete={() => deleteUserCompetence(params.row, competenceInsp)}
+                disabled={loadingTable}
+              />
+            ))
+          }
+        </Paper>
       )
     },
     {
@@ -716,6 +860,15 @@ const ViewUsers = () => {
                   processRowUpdate={processRowUpdate}
                   loading={loadingTable}
                   onProcessRowUpdateError={(error) => {console.error(error)}}
+                  getRowHeight={(params) => {
+                    if(params.model && params.model.rol === apiUserRoles.directorTecnico && params.model.competenciasFirmaDictamenDt.length > 0){
+                      return 'auto';
+                    }
+                    else if(params.model && params.model.rol === apiUserRoles.inspector && params.model.competencias.length > 0){
+                      return 'auto';
+                    }
+                    return null;
+                  }}
                 />
               </ThemeProvider>
             </Box>
