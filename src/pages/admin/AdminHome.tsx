@@ -296,7 +296,7 @@ const AdminHome = () => {
               <Typography
                 variant="h5"
                 noWrap
-                component="a"
+                component="h5"
                 sx={{
                   mr: 2,
                   display: { xs: 'flex', md: 'none' },
