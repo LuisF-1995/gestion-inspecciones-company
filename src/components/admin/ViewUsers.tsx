@@ -749,14 +749,14 @@ const ViewUsers = () => {
 
         return [
           <GridActionsCellItem
-            icon={<EditIcon />}
+            icon={<EditIcon color='info' />}
             label="Edit"
             className="textPrimary"
             onClick={handleEditClick(id)}
             color="inherit"
           />,
           <GridActionsCellItem
-            icon={<DeleteIcon />}
+            icon={<DeleteIcon color='error' />}
             label="Delete"
             onClick={handleDeleteClick(id, row)}
             color="inherit"
@@ -780,7 +780,7 @@ const ViewUsers = () => {
           {images.map((image) => (
             <ImageButton
               name={image.title}
-              focusRipple
+              //focusRipple
               key={image.title}
               style={{
                 width: image.width,

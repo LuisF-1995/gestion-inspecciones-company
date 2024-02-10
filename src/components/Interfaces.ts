@@ -17,6 +17,8 @@ export interface IRegionalApiData{
     directorRegional?:IUserApiData|any;
     inspectores?:IUserApiData[]|any;
     asesoresComerciales?:IUserApiData[]|any;
+    direccion?:string;
+    telefono?:string;
 }
 
 export interface ICompetencia{

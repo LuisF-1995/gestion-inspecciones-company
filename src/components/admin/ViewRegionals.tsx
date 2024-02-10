@@ -6,13 +6,14 @@ import { sendDelete, sendGet, sendPost, sendPut } from '../../services/apiReques
 import { API_GESTION_INSPECCIONES_URL } from '../../constants/apis';
 import Swal from 'sweetalert2';
 import { IRegionalApiData, IUserApiData } from '../Interfaces';
-import { Backdrop, Button, CircularProgress, Container, MenuItem, Select, SelectChangeEvent, TextField, ThemeProvider, createTheme } from '@mui/material';
+import { Backdrop, Box, Button, Card, CardActions, CardContent, CircularProgress, Container, Grid, MenuItem, Select, SelectChangeEvent, TextField, ThemeProvider, Typography, createTheme } from '@mui/material';
 import { DataGrid, GridActionsCellItem, GridColDef, GridColumnVisibilityModel, GridEventListener, GridFilterModel, GridRenderEditCellParams, GridRowEditStopReasons, GridRowId, GridRowModel, GridRowModes, GridRowModesModel, GridRowsProp, GridToolbar, GridValueGetterParams } from '@mui/x-data-grid';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
+import RegionalView from './RegionalView';
 
 const darkTheme = createTheme({
   palette: {
@@ -30,8 +31,8 @@ const initialRows: GridRowsProp = [
 const ViewRegionals = () => {
   const navigate = useNavigate();
   const { regionalId } = useParams();
-  const [token, setToken] = useState("");
   const [regionalInfo, setRegionalInfo] = useState(null);
+  const [token, setToken] = useState("");
   const [regionalDirectorsOpt, setRegionalDirectorsOpt] = useState<IUserApiData[]>([]);
   const [waiting, setWaiting] = useState(false);
   const [filterModel, setFilterModel] = useState<GridFilterModel>({
@@ -50,9 +51,7 @@ const ViewRegionals = () => {
       const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
       setToken(jwtToken);
 
-      if(regionalId && regionalId != undefined)
-        getRegionalInfoById(regionalId, jwtToken);
-      else
+      if(!regionalId || regionalId == undefined)
         getRegionalsInfo(jwtToken);
     }
     else{
@@ -104,25 +103,7 @@ const ViewRegionals = () => {
     }
   }, [])
 
-  const getRegionalInfoById = async (idRegional:string|number, jwtToken:string) => {
-    setWaiting(true);
-
-    if(jwtToken){
-      try {
-        const regionalInfo = await sendGet(`${API_GESTION_INSPECCIONES_URL}/regionales/id/${idRegional}`, jwtToken);
-        setWaiting(false);
-
-        if(regionalInfo && regionalInfo.status === 200 && regionalInfo.data){
-          const regionalData = regionalInfo.data;
-          setRegionalInfo(regionalData);
-        }
-      }
-      catch (error) {
-        setWaiting(false);
-        sessionStorage.clear();
-      }
-    }
-  }
+  
 
   const getRegionalsInfo = async(jwtToken:string) => {
     setLoadingTable(true);
@@ -397,14 +378,14 @@ const ViewRegionals = () => {
 
         return [
           <GridActionsCellItem
-            icon={<EditIcon />}
+            icon={<EditIcon color='info' />}
             label="Edit"
             className="textPrimary"
             onClick={handleEditClick(id)}
             color="inherit"
           />,
           <GridActionsCellItem
-            icon={<DeleteIcon />}
+            icon={<DeleteIcon color='error' />}
             label="Delete"
             onClick={handleDeleteClick(id)}
             color="inherit"
@@ -417,9 +398,7 @@ const ViewRegionals = () => {
   return (
     <main>
       {regionalId && regionalId != undefined ?
-        <Container maxWidth="xl" sx={{ m:0, p:0 }}>
-          <h3 style={{margin:"10px 0px", textAlign:"center"}}>Gestionar {regionalInfo && regionalInfo.ciudad ? `regional ${regionalInfo.ciudad}` : "regionales"}</h3>
-        </Container>
+        <RegionalView regionalId={regionalId}/>
         :
         <Container maxWidth="xl" sx={{ m:0, p:0 }}>
           <h3 style={{margin:"10px 0px", textAlign:"center"}}>Gestionar regionales</h3>
