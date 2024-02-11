@@ -248,7 +248,7 @@ const ViewCompetences = () => {
     
     if(action === competenceActions.delete){
       Swal.fire({
-        title: `Eliminar compentencia`,
+        title: `Eliminar competencia`,
         text: `Se va a eliminar la competencia de ${competenceSelected && competenceSelected.competencia}, ¿Desea proceder?`,
         icon: 'question',
         confirmButtonText: 'Eliminar',

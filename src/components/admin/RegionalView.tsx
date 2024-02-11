@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Backdrop, Button, Card, CardActions, CardContent, CircularProgress, Container, Divider, Grid, List, ListItem, ListItemText, Paper, ThemeProvider, Typography, createTheme, styled } from '@mui/material';
-import { localTokenKeyName } from '../../constants/globalConstants';
-import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
-import { adminLoginPath } from '../../constants/routes';
-import { sendGet } from '../../services/apiRequests';
-import { API_GESTION_INSPECCIONES_URL } from '../../constants/apis';
 import { IInspector, IRegionalApiData, IUserApiData } from '../Interfaces';
+import { localTokenKeyName } from '../../constants/globalConstants';
+import { adminLoginPath } from '../../constants/routes';
+import { API_GESTION_INSPECCIONES_URL, REGIONALS } from '../../constants/apis';
+import { sendGet, sendPut } from '../../services/apiRequests';
+import CustomSnackbar from '../CustomSnackbar';
+import Swal from 'sweetalert2';
+import { green, red } from '@mui/material/colors';
+import { Backdrop, Box, Button, Card, CardActions, CardContent, CircularProgress, Container, Divider, Fab, Grid, IconButton, List, ListItem, ListItemText, Paper, TextField, ThemeProvider, Tooltip, Typography, Zoom, createTheme, styled } from '@mui/material';
+import SpellcheckRoundedIcon from '@mui/icons-material/SpellcheckRounded';
+import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
+import CheckIcon from '@mui/icons-material/Check';
+import SaveIcon from '@mui/icons-material/Save';
 
 const darkTheme = createTheme({
   palette: {
@@ -18,19 +24,27 @@ const darkTheme = createTheme({
   },
 });
 
-const Item = styled(Paper)(({ theme }) => ({
-  backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
-  ...theme.typography.body2,
-  padding: theme.spacing(1),
-  textAlign: 'center',
-  color: theme.palette.text.secondary,
-}));
 
 const RegionalView = (props:{regionalId:string|number}) => {
   const navigate = useNavigate();
   const [regionalInfo, setRegionalInfo] = useState<IRegionalApiData>(null);
   const [token, setToken] = useState("");
   const [waiting, setWaiting] = useState(false);
+  const [infoEditWaiting, setInfoEditWaiting] = useState(false);
+  const [infoToEdit, setInfoToEdit] = useState("");
+  const [snackBarInfo, setSnackbarInfo] = useState<{open:boolean, message:string, alertType:"success"|"info"|"warning"|"error", variant:"filled" | "standard" | "outlined"}>({
+    open: false,
+    message: "",
+    alertType: "info",
+    variant: "standard"
+  });
+
+  const handleCloseSnackbar = () => {
+    setSnackbarInfo({
+      ...snackBarInfo,
+      open: false
+    });
+  };
 
   useEffect(() => {
     if(sessionStorage.length > 0){
@@ -51,12 +65,12 @@ const RegionalView = (props:{regionalId:string|number}) => {
       .then(option => {
         if(option.isConfirmed){
           Swal.close();
-          navigate(`../${adminLoginPath}`);
+          navigate(`../../../${adminLoginPath}`);
         }
         else
           setTimeout(() => {
             Swal.close();
-            navigate(`../${adminLoginPath}`);
+            navigate(`../../../${adminLoginPath}`);
           }, 5000);
       })
     }
@@ -80,7 +94,77 @@ const RegionalView = (props:{regionalId:string|number}) => {
         sessionStorage.clear();
       }
     }
+  };
+
+  const editInfo = (event: any) => {
+    if(event){
+      setInfoToEdit(event.target.id);
+    }
+    else
+      setInfoToEdit("");
+  };
+
+  const handleRegionalInfoEdit = (changeEvent:React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const name = changeEvent ? changeEvent.target.name : "";
+    const value = changeEvent ? changeEvent.target.value : "";
+
+    if(name && name.length > 0)
+      setRegionalInfo({
+        ...regionalInfo,
+        [name]: value
+      });
   }
+
+  const updateRegionalInfo = async () => {
+    setInfoEditWaiting(true);
+
+    if(sessionStorage.length > 0){
+      const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
+      if(jwtToken.length > 0){
+        try {
+          const regionalUpdate = { ...regionalInfo };
+          delete regionalUpdate.asesoresComerciales;
+          delete regionalUpdate.inspectores;
+          delete regionalUpdate.directorRegional;
+
+          const regionalUpdateResponse = await sendPut(`${API_GESTION_INSPECCIONES_URL}/${REGIONALS}/update`, regionalUpdate, jwtToken);
+          if(regionalUpdateResponse){
+            setSnackbarInfo({
+              open: true,
+              message: "Información de regional actualizada",
+              alertType:"success",
+              variant: "standard"
+            });
+            setInfoEditWaiting(false);
+            editInfo(null);
+          }
+        } 
+        catch (error) {
+          console.error(error);
+        }
+      }
+    }
+    else{
+      setWaiting(false);
+      Swal.fire({
+        title: 'Expiró la sesión',
+        text: `La sesión expiró, debe volver a iniciar sesión`,
+        icon: 'info',
+        confirmButtonText: "Iniciar sesión"
+      })
+      .then(option => {
+        if(option.isConfirmed){
+          Swal.close();
+          navigate(`../../../${adminLoginPath}`);
+        }
+        else
+          setTimeout(() => {
+            Swal.close();
+            navigate(`../../../${adminLoginPath}`);
+          }, 5000);
+      })
+    }
+  };
 
   return (
     <Container maxWidth="xl" sx={{ m:0, p:0 }}>
@@ -90,12 +174,153 @@ const RegionalView = (props:{regionalId:string|number}) => {
           <Typography variant="h5" component="div" mb={1}>
             Regional {regionalInfo && regionalInfo.ciudad}
           </Typography>
-          <Typography sx={{ mb: 1 }} >
-            Dirección: {regionalInfo && regionalInfo.direccion ? regionalInfo.direccion : "No registra"}
-          </Typography>
-          <Typography >
-            Teléfono: {regionalInfo && regionalInfo.telefono ? regionalInfo.telefono : "No registra"}
-          </Typography>
+          
+          {infoToEdit.length > 0 && infoToEdit === "regionalAddress" ?
+            <div style={{display:"flex", alignItems:"center", gap:5}}>
+              <TextField 
+                type='text' 
+                name="direccion" 
+                id="regionalEdit" 
+                label="Dirección" 
+                variant="outlined" 
+                value={regionalInfo.direccion ? regionalInfo.direccion : ""} 
+                onChange={handleRegionalInfoEdit} 
+                disabled={infoEditWaiting}
+              />
+              <Tooltip title="Guardar">
+                <Box sx={{ position: 'relative' }} >
+                  <Fab
+                    onClick={updateRegionalInfo}
+                    disabled={infoEditWaiting}
+                    aria-label="save"
+                    color="info"
+                    sx={{
+                      ...(infoEditWaiting && {
+                        bgcolor: green[500],
+                        '&:hover': {
+                          bgcolor: green[800],
+                        },
+                      }),
+                    }}
+                  >
+                    {infoEditWaiting ? <CheckIcon /> : <SaveIcon />}
+                  </Fab>
+                  {infoEditWaiting && (
+                    <CircularProgress
+                      size={68}
+                      sx={{
+                        color: green[500],
+                        position: 'absolute',
+                        top: -6,
+                        left: -6,
+                        zIndex: 1,
+                      }}
+                    />
+                  )}
+                </Box>
+              </Tooltip>
+              <Tooltip title="Cancelar">
+                <Box sx={{ position: 'relative' }} >
+                  <Fab
+                    onClick={() => editInfo(null)}
+                    disabled={infoEditWaiting}
+                    aria-label="cancel"
+                    color="error"
+                    sx={{
+                      ...(infoEditWaiting && {
+                        bgcolor: red[500],
+                        '&:hover': {
+                          bgcolor: red[700],
+                        },
+                      }),
+                    }}
+                  >
+                    <CancelRoundedIcon />
+                  </Fab>
+                </Box>
+              </Tooltip>
+            </div>
+            :
+            <Tooltip 
+              title="Editar dirección"
+              TransitionComponent={Zoom}
+              arrow
+              followCursor
+            >
+              <Typography sx={{ mb: 1, flexShrink: 0 }} id="regionalAddress" onClick={editInfo} >
+                Dirección: {regionalInfo && regionalInfo.direccion ? regionalInfo.direccion : "No registra"}
+              </Typography>
+            </Tooltip>
+          }
+
+          {infoToEdit.length > 0 && infoToEdit === "editPhone" ?
+            <div style={{display:"flex", alignItems:"center", gap:5}}>
+              <TextField type='tel' name="telefono" id="editPhone" label="Teléfono" variant="outlined" value={regionalInfo.telefono ? regionalInfo.telefono : ""} onChange={handleRegionalInfoEdit} />
+              <Tooltip title="Guardar">
+                <Box sx={{ position: 'relative' }} >
+                  <Fab
+                    onClick={updateRegionalInfo}
+                    disabled={infoEditWaiting}
+                    aria-label="save"
+                    color="info"
+                    sx={{
+                      ...(infoEditWaiting && {
+                        bgcolor: green[500],
+                        '&:hover': {
+                          bgcolor: green[800],
+                        },
+                      }),
+                    }}
+                  >
+                    {infoEditWaiting ? <CheckIcon /> : <SaveIcon />}
+                  </Fab>
+                  {infoEditWaiting && (
+                    <CircularProgress
+                      size={68}
+                      sx={{
+                        color: green[500],
+                        position: 'absolute',
+                        top: -6,
+                        left: -6,
+                        zIndex: 1,
+                      }}
+                    />
+                  )}
+                </Box>
+              </Tooltip>
+              <Tooltip title="Cancelar">
+                <Box sx={{ position: 'relative' }} >
+                  <Fab
+                    onClick={() => editInfo(null)}
+                    disabled={infoEditWaiting}
+                    aria-label="cancel"
+                    color="error"
+                    sx={{
+                      ...(infoEditWaiting && {
+                        bgcolor: red[500],
+                        '&:hover': {
+                          bgcolor: red[700],
+                        },
+                      }),
+                    }}
+                  >
+                    <CancelRoundedIcon />
+                  </Fab>
+                </Box>
+              </Tooltip>
+            </div>
+            :
+            <Tooltip 
+              title="Editar teléfono"
+              TransitionComponent={Zoom}
+              arrow
+              followCursor
+            >
+              <Typography sx={{ mb: 1, flexShrink: 0 }} id="editPhone" onClick={editInfo} >
+                Teléfono: {regionalInfo && regionalInfo.telefono ? regionalInfo.telefono : "No registra"}
+              </Typography>
+            </Tooltip>
+          }
 
           <Divider variant="fullWidth" sx={{mb:1, mt:1}}></Divider>
 
@@ -120,7 +345,7 @@ const RegionalView = (props:{regionalId:string|number}) => {
                   Asesores comerciales
                 </Typography>
                 <List dense={true} sx={{maxHeight:"60vh", overflow:"auto"}}>
-                  {regionalInfo && regionalInfo.asesoresComerciales.length > 0 &&
+                  {regionalInfo && regionalInfo.asesoresComerciales && regionalInfo.asesoresComerciales.length > 0 &&
                     regionalInfo.asesoresComerciales.map((asesor:IUserApiData, index:number) => {
                       if(index + 1 === regionalInfo.asesoresComerciales.length)
                         return(
@@ -156,7 +381,7 @@ const RegionalView = (props:{regionalId:string|number}) => {
                   Inspectores
                 </Typography>
                 <List dense={true} sx={{maxHeight:"60vh", overflow:"auto"}}>
-                  {regionalInfo && regionalInfo.inspectores.length > 0 &&
+                  {regionalInfo && regionalInfo.inspectores && regionalInfo.inspectores.length > 0 &&
                     regionalInfo.inspectores.map((inspector:IInspector, index:number) => {
                       if(index + 1 === regionalInfo.inspectores.length)
                         return(
@@ -187,6 +412,16 @@ const RegionalView = (props:{regionalId:string|number}) => {
           </Grid>
         </ThemeProvider>
       </Grid>
+      
+      <CustomSnackbar 
+        open={snackBarInfo.open} 
+        message={snackBarInfo.message} 
+        horizontal={'center'} vertical={'bottom'} 
+        autoHideTime={5000} 
+        alertType={snackBarInfo.alertType} 
+        variant={snackBarInfo.variant}
+        onClose={handleCloseSnackbar}
+      />
       <Backdrop
           sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
           open={waiting}

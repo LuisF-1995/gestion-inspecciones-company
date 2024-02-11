@@ -252,7 +252,9 @@ const ViewRegionals = () => {
     
     const regionalUpdateObj = {
       id: row.id,
-      ciudad: row.ciudad
+      ciudad: row.ciudad,
+      direccion: row.direccion,
+      telefono: row.telefono
     }
 
     await updateRegional(regionalUpdateObj);
@@ -306,7 +308,6 @@ const ViewRegionals = () => {
     setRowModesModel(newRowModesModel);
   };
 
-
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', type:'number', width: 60, headerAlign:'center', editable:false, hideable:true },
     { field: 'ciudad', headerName: 'Ciudad', type:'string', minWidth: 200, maxWidth:500, headerAlign:'center', align:'center', editable:true,
@@ -325,7 +326,7 @@ const ViewRegionals = () => {
     {
       field: 'directorRegional',
       headerName: 'Director Regional',
-      minWidth: 500, maxWidth:800, headerAlign:'center', align:'center', editable:false,
+      width: 300, headerAlign:'center', align:'center', editable:false,
       renderCell: (params: GridValueGetterParams) => (
         <Select
           fullWidth
@@ -346,6 +347,32 @@ const ViewRegionals = () => {
           ))}
         </Select>
       ),
+    },
+    { field: 'direccion', headerName: 'Dirección', type:'string', width:350, headerAlign:'center', align:'left', editable:true,
+      renderEditCell: (params:GridRenderEditCellParams) => (
+        <TextField
+          fullWidth
+          type='text'
+          name={params.field}
+          id="editAddress"
+          label=""
+          value={params.formattedValue}
+          onChange={(event:React.ChangeEvent<HTMLInputElement>) => handleRegionalChanges(params, event)}
+        />
+      )
+    },
+    { field: 'telefono', headerName: 'Teléfono', type:'string', width:150, headerAlign:'center', align:'left', editable:true,
+      renderEditCell: (params:GridRenderEditCellParams) => (
+        <TextField
+          fullWidth
+          type='text'
+          name={params.field}
+          id="editPhone"
+          label=""
+          value={params.formattedValue}
+          onChange={(event:React.ChangeEvent<HTMLInputElement>) => handleRegionalChanges(params, event)}
+        />
+      )
     },
     {
       field: 'actions',
