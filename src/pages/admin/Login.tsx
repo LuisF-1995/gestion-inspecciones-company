@@ -10,7 +10,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Swal from 'sweetalert2';
 import { NavLink, useNavigate } from 'react-router-dom';
 import CountrySelect from '../../components/CountrySelect';
-import { localTokenKeyName, localUserIdKeyName } from '../../constants/globalConstants';
+import { localAdminTokenKeyName, localAdminUserIdKeyName } from '../../constants/globalConstants';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -64,8 +64,8 @@ const AdminLogin = () => {
       setWaiting(false);
 
       if(loginResponse && loginResponse.authenticationSuccess && loginResponse.jwtToken && loginResponse.userInfo){
-        sessionStorage.setItem(localTokenKeyName, loginResponse.jwtToken);
-        sessionStorage.setItem(localUserIdKeyName, loginResponse.userInfo.id);
+        sessionStorage.setItem(localAdminTokenKeyName, loginResponse.jwtToken);
+        sessionStorage.setItem(localAdminUserIdKeyName, loginResponse.userInfo.id);
         navigate(`../${adminPortalPath}`);
       }
       else if (!loginResponse.authenticationSuccess && loginResponse.userInfo){

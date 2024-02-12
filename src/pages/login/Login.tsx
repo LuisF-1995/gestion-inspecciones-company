@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import './login.styles.css';
-import { TextField, Button, MenuItem, FormControl, InputLabel, Select, Box } from '@mui/material';
 import { API_GESTION_INSPECCIONES_URL, COMMERCIAL_ADVISORS, INSPECTORS, REGIONAL_DIRECTORS, SCHEDULE_PROGRAMMERS, TECHNICAL_DIRECTORS } from '../../constants/apis';
 import { sendGet, sendPost } from '../../services/apiRequests';
-import { adminRootPath, adminLoginPath } from '../../constants/routes';
+import { adminRootPath, adminLoginPath, commercialAdvisorRoutes, inspectorRoutes, agendaProgrammerRoutes, technicalDirectorRoutes, regionalDirectorRoutes } from '../../constants/routes';
+import { apiUserRoles, localUserIdKeyName, localUserRolKeyName, localUserTokenKeyName } from '../../constants/globalConstants';
+import { getUserRoles } from '../../services/globalFunctions';
+import { NavLink, useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 // MATERIAL UI COMPONENTS
+import { TextField, Button, MenuItem, FormControl, InputLabel, Select, Box } from '@mui/material';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
-import Swal from 'sweetalert2';
-import { NavLink } from 'react-router-dom';
-import { getUserRoles } from '../../services/globalFunctions';
-import { apiUserRoles } from '../../constants/globalConstants';
 
 
 const GeneralLogin = () => {
+  const navigate = useNavigate();
   const [roles, setRoles] = useState(['']);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,15 +22,20 @@ const GeneralLogin = () => {
   const [waiting, setWaiting] = useState(false);
 
   useEffect(() => {
-    getUserRolesArray();
+    if( localStorage.length > 0 && 
+        localStorage.getItem(localUserTokenKeyName) && localStorage.getItem(localUserTokenKeyName).length > 0 &&
+        localStorage.getItem(localUserIdKeyName) && localStorage.getItem(localUserIdKeyName).length > 0 &&
+        localStorage.getItem(localUserRolKeyName) && localStorage.getItem(localUserRolKeyName).length > 0 )
+      redirectToPageByUserRol(localStorage.getItem(localUserRolKeyName));
+    else
+      getUserRolesArray();
   }, [])
 
   const getUserRolesArray = async() => {
     const userRoles = await getUserRoles();
     setRoles(userRoles);
-  }
+  };
   
-
   const handleLogin = async (form:React.FormEvent<HTMLFormElement>) => {
     form.preventDefault();
     setWaiting(true);
@@ -41,16 +47,28 @@ const GeneralLogin = () => {
 
     try {
       const loginValidation = await validateLoginByRol(selectedRole, loginObject);
+      setWaiting(false);
   
       if(loginValidation && loginValidation.authenticationSuccess && loginValidation.jwtToken && loginValidation.userInfo){
-        setWaiting(false);
+        localStorage.clear();
+        localStorage.setItem(localUserTokenKeyName, loginValidation.jwtToken);
+        localStorage.setItem(localUserIdKeyName, loginValidation.userInfo.id);
+        localStorage.setItem(localUserRolKeyName, selectedRole);
+
+        redirectToPageByUserRol(selectedRole);
       }
       else if(loginValidation && loginValidation.authInfo && !loginValidation.authenticationSuccess){
-        setWaiting(false);
         Swal.fire({
           title: 'No se pudo iniciar sesión',
           text: `${loginValidation.authInfo}`,
           icon: 'info',
+        })
+      }
+      else if(loginValidation && loginValidation.response && loginValidation.response.status && loginValidation.response.status === 401){
+        Swal.fire({
+          title: 'Credenciales erróneas',
+          text: `Favor validar que el usuario y contraseña estén correctos`,
+          icon: 'error',
         })
       }
       else{
@@ -94,6 +112,27 @@ const GeneralLogin = () => {
     }
   }
 
+  const redirectToPageByUserRol = (userRol:string) => {
+    switch (userRol) {
+      case apiUserRoles.asesorComercial:
+        navigate(`/${commercialAdvisorRoutes.root}`);
+        break;
+      case apiUserRoles.inspector:
+        navigate(`/${inspectorRoutes.root}`);          
+        break;
+      case apiUserRoles.programadorAgenda:
+        navigate(`/${agendaProgrammerRoutes.root}`);          
+        break;
+      case apiUserRoles.directorTecnico:
+        navigate(`/${technicalDirectorRoutes.root}`);          
+        break;
+      case apiUserRoles.directorRegional:
+        navigate(`/${regionalDirectorRoutes.root}`);          
+        break;
+      default:
+        break;
+    }
+  }
 
   return (
     <main className="logincontainer">

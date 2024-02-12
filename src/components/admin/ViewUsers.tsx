@@ -27,7 +27,7 @@ import { getComercialAdvisors, getInspectors, getRegionalDirectors, getRegionals
 import { API_GESTION_INSPECCIONES_URL, COMMERCIAL_ADVISORS, INSPECTORS, REGIONAL_DIRECTORS, SCHEDULE_PROGRAMMERS, TECHNICAL_DIRECTORS } from '../../constants/apis';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { adminAddUserPath, adminLoginPath } from '../../constants/routes';
-import { apiUserRoles, localTokenKeyName } from '../../constants/globalConstants';
+import { apiUserRoles, localAdminTokenKeyName } from '../../constants/globalConstants';
 import Swal from 'sweetalert2';
 import { ICompetencia, IInspector, IRegionalApiData, IUserApiData } from '../Interfaces';
 import { sendDelete, sendGet, sendPut } from '../../services/apiRequests';
@@ -178,7 +178,7 @@ const ViewUsers = () => {
   useEffect(() => {
     getUserRolesArray();
     if(sessionStorage.length > 0){
-      const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
+      const jwtToken:string = sessionStorage.getItem(localAdminTokenKeyName);
       setToken(jwtToken);
       (async () => {
         setLoadingTable(true);
@@ -342,7 +342,7 @@ const ViewUsers = () => {
     setLoadingTable(true);
 
     if(sessionStorage.length > 0){
-      const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
+      const jwtToken:string = sessionStorage.getItem(localAdminTokenKeyName);
       
       try{
         switch (userInfo.rol) {
@@ -478,7 +478,7 @@ const ViewUsers = () => {
     let userUpdated = selectedUser;
 
     if(sessionStorage.length > 0){
-      const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
+      const jwtToken:string = sessionStorage.getItem(localAdminTokenKeyName);
       try{
         switch (selectedUser.rol) {
           case apiUserRoles.directorTecnico:

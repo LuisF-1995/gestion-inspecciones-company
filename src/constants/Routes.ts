@@ -4,7 +4,6 @@ export const adminRootPath = "admin";
 export const adminPortalPath = "portal";
 export const adminLoginPath = "login";
 export const adminRegisterPath = "register";
-export const adminDashboardPath = "dashboard";
 export const adminUsersPath = "users";
 export const adminAddUserPath = "add-user";
 export const adminCompetencesPath = "competences";
@@ -13,17 +12,24 @@ export const adminRegionalsPath = "regionals";
 export const adminAddRegionalPath = "add-regional";
 export const adminProfilePath = "profile";
 
-export const asesorComercialRootPath = "comercial/";
-export const asesorDashboardPath = "dashboard";
+export const commercialAdvisorRoutes = {
+  root: "comercial",
+  profile: "profile",
+  quotes: "cotizaciones"
+};
 
-export const dirRegionalRootPath = "director-regional/";
-export const dirRegionalDashboardPath = "dashboard";
+export const regionalDirectorRoutes = {
+  root: "director-regional"
+};
 
-export const dirTecnicoRootPath = "director-tecnico/";
-export const dirTecnicoDashboardPath = "dashboard";
+export const technicalDirectorRoutes = {
+  root: "director-tecnico"
+};
 
-export const inspectorRootPath = "inspector/";
-export const inspectorDashboardPath = "dashboard";
+export const inspectorRoutes = {
+  root: "inspector"
+};
 
-export const programadorAgendaRootPath = "programador/";
-export const programadorAgendaDashboardPath = "dashboard";
+export const agendaProgrammerRoutes = {
+  root: "programador"
+};

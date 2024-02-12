@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, useNavigate, useParams } from 'react-router-dom';
 import { adminAddRegionalPath, adminAddUserPath, adminLoginPath } from '../../constants/routes';
-import { localTokenKeyName } from '../../constants/globalConstants';
+import { localAdminTokenKeyName } from '../../constants/globalConstants';
 import { sendDelete, sendGet, sendPost, sendPut } from '../../services/apiRequests';
 import { API_GESTION_INSPECCIONES_URL } from '../../constants/apis';
 import Swal from 'sweetalert2';
@@ -48,7 +48,7 @@ const ViewRegionals = () => {
 
   useEffect(() => {
     if(sessionStorage.length > 0){
-      const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
+      const jwtToken:string = sessionStorage.getItem(localAdminTokenKeyName);
       setToken(jwtToken);
 
       if(!regionalId || regionalId == undefined)
@@ -78,7 +78,7 @@ const ViewRegionals = () => {
 
   useEffect(()=>{
     if(sessionStorage.length > 0){
-      const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
+      const jwtToken:string = sessionStorage.getItem(localAdminTokenKeyName);
       getRegionalDirectors(jwtToken);
     }
     else{
@@ -163,7 +163,7 @@ const ViewRegionals = () => {
       }
   
       if(sessionStorage.length > 0){
-        const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
+        const jwtToken:string = sessionStorage.getItem(localAdminTokenKeyName);
         await updateRegionalDirector(jwtToken, regionalDirectorUpdate);
       }
       else{

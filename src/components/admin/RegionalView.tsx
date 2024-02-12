@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { IInspector, IRegionalApiData, IUserApiData } from '../Interfaces';
-import { localTokenKeyName } from '../../constants/globalConstants';
+import { localAdminTokenKeyName } from '../../constants/globalConstants';
 import { adminLoginPath } from '../../constants/routes';
 import { API_GESTION_INSPECCIONES_URL, REGIONALS } from '../../constants/apis';
 import { sendGet, sendPut } from '../../services/apiRequests';
@@ -48,7 +48,7 @@ const RegionalView = (props:{regionalId:string|number}) => {
 
   useEffect(() => {
     if(sessionStorage.length > 0){
-      const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
+      const jwtToken:string = sessionStorage.getItem(localAdminTokenKeyName);
       setToken(jwtToken);
 
       if(props.regionalId && props.regionalId != undefined)
@@ -119,7 +119,7 @@ const RegionalView = (props:{regionalId:string|number}) => {
     setInfoEditWaiting(true);
 
     if(sessionStorage.length > 0){
-      const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
+      const jwtToken:string = sessionStorage.getItem(localAdminTokenKeyName);
       if(jwtToken.length > 0){
         try {
           const regionalUpdate = { ...regionalInfo };

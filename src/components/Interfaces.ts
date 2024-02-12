@@ -67,3 +67,58 @@ export interface ITechnicalDirector{
     firmaDirectorTecnico?:string;
     rol?:string;
 }
+
+export interface ICommercialAdvisor{
+  id?:number;
+  nombres?: string;
+  apellidos?: string;
+  email: string;
+  telefono?: string;
+  regional?: IRegionalApiData;
+  proyectosAsesor?: IProject[];
+  rol?: string;
+}
+
+export interface ICustomer {
+  id?: number;
+  nombre?: string;
+  telefono?: string;
+  email: string;
+  proyectosCliente?: IProject[];
+  rol?: string;
+}
+
+export interface IConstructor {
+  id?: number;
+  nombres?: string;
+  apellidos?: string;
+  tipoDocumento?: string;
+  numeroDocumento: number;
+  telefono?: string;
+  email: string;
+  matriculaProfesional?: string;
+  direccionDomicilio?: string;
+  firmaConstructor?: string;
+  proyectosConstructor?: IProject[];
+  qrConstructor?: string;
+  rol?: string;
+}
+
+export interface IProject{
+  id?: number;
+  nombreProyecto: string;
+  numeroProforma?: string;
+  numeroCotizacion?: string;
+  numeroInspeccion?: string;
+  alcance?: string;
+  estadoProyecto: "aprobado" | "abierto" | "cerrado";
+  direccionProyecto: string;
+  visitasCotizadas: number;
+  visitasRealizadas?: number;
+  asesorComercial?: ICommercialAdvisor;
+  cliente?: ICustomer;
+  constructores?: IConstructor[];
+  calendarioProyectos?: ICalendar[];
+  actasProyecto:any;
+  fechaCierreProyecto?: Date;
+}

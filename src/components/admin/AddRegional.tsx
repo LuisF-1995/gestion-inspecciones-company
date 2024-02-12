@@ -2,7 +2,7 @@ import { Backdrop, Box, Button, CircularProgress, Container, TextField } from '@
 import React, { useState } from 'react';
 import { sendPost } from '../../services/apiRequests';
 import { API_GESTION_INSPECCIONES_URL } from '../../constants/apis';
-import { localTokenKeyName, localUserIdKeyName } from '../../constants/globalConstants';
+import { localAdminTokenKeyName, localAdminUserIdKeyName } from '../../constants/globalConstants';
 
 const AddRegional = (props:{getRegionals:any}) => {
   const [regional, setRegional] = useState({ciudad:""});
@@ -19,7 +19,7 @@ const AddRegional = (props:{getRegionals:any}) => {
     setWaiting(true);
 
     if(sessionStorage.length > 0){
-      const jwtToken = sessionStorage.getItem(localTokenKeyName);
+      const jwtToken = sessionStorage.getItem(localAdminTokenKeyName);
       if(jwtToken){
         try {
           const regionalsInfo = await sendPost(`${API_GESTION_INSPECCIONES_URL}/regionales/create`, regional, jwtToken);

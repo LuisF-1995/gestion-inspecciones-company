@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { adminAddCompetencePath, adminLoginPath } from '../../constants/routes';
-import { apiUserRoles, localTokenKeyName } from '../../constants/globalConstants';
+import { apiUserRoles, localAdminTokenKeyName } from '../../constants/globalConstants';
 import { sendDelete, sendPut } from '../../services/apiRequests';
 import { API_GESTION_INSPECCIONES_URL, COMPETENCES, INSPECTORS, TECHNICAL_DIRECTORS } from '../../constants/apis';
 import { getCompetencesFromApi, getInspectors, getTechnicalDirectors } from '../../services/globalFunctions';
@@ -90,7 +90,7 @@ const ViewCompetences = () => {
 
   useEffect(()=>{
     if(sessionStorage.length > 0){
-      const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
+      const jwtToken:string = sessionStorage.getItem(localAdminTokenKeyName);
       setToken(jwtToken);
       getCompetencesInfo(jwtToken);
       getUsers(jwtToken);
@@ -183,7 +183,7 @@ const ViewCompetences = () => {
   const deleteCompetence = async (competenceId:number) => {
     setWaiting(true);
     if(sessionStorage.length > 0){
-      const jwtToken = sessionStorage.getItem(localTokenKeyName);
+      const jwtToken = sessionStorage.getItem(localAdminTokenKeyName);
 
       if(jwtToken){
         try {
@@ -217,7 +217,7 @@ const ViewCompetences = () => {
     });
 
     if(sessionStorage.length > 0){
-      const jwtToken = sessionStorage.getItem(localTokenKeyName);
+      const jwtToken = sessionStorage.getItem(localAdminTokenKeyName);
       if(jwtToken){
         const competence = editCompetenceModal.competenceInfo;
         try {
@@ -280,7 +280,7 @@ const ViewCompetences = () => {
   const addUsersCompetence = async () => {
     const competence = usersSelected.competence;
     if(sessionStorage.length > 0){
-      const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
+      const jwtToken:string = sessionStorage.getItem(localAdminTokenKeyName);
       setLoadingTable(true);
       const engineersTable:IUserApiData[] = rows.filter(user => user.rol === apiUserRoles.inspector);
       
@@ -348,7 +348,7 @@ const ViewCompetences = () => {
     let userUpdated = userWithCompetence;
 
     if(sessionStorage.length > 0){
-      const jwtToken:string = sessionStorage.getItem(localTokenKeyName);
+      const jwtToken:string = sessionStorage.getItem(localAdminTokenKeyName);
       try{
         switch (selectedUser.rol) {
           case apiUserRoles.directorTecnico:

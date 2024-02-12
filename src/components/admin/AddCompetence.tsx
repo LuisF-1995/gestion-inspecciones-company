@@ -1,6 +1,6 @@
 import { Backdrop, Box, Button, CircularProgress, Container, TextField } from '@mui/material'
 import React, { useState } from 'react'
-import { localTokenKeyName } from '../../constants/globalConstants';
+import { localAdminTokenKeyName } from '../../constants/globalConstants';
 import { sendPost } from '../../services/apiRequests';
 import { API_GESTION_INSPECCIONES_URL, COMPETENCES } from '../../constants/apis';
 import { ICompetencia } from '../Interfaces';
@@ -21,7 +21,7 @@ const AddCompetence = () => {
     setWaiting(true);
 
     if(sessionStorage.length > 0){
-      const jwtToken = sessionStorage.getItem(localTokenKeyName);
+      const jwtToken = sessionStorage.getItem(localAdminTokenKeyName);
       if(jwtToken){
         try {
           const compentencesInfo:ICompetencia = await sendPost(`${API_GESTION_INSPECCIONES_URL}/${COMPETENCES}/add`, competence, jwtToken);

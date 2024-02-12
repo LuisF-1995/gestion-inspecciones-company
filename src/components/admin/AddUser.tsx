@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { sendGet, sendPost } from '../../services/apiRequests';
 import Swal from 'sweetalert2';
 import { IUserApiData } from '../Interfaces';
-import { apiUserRoles, localTokenKeyName } from '../../constants/globalConstants';
+import { apiUserRoles, localAdminTokenKeyName } from '../../constants/globalConstants';
 // MATERIAL UI COMPONENTS
 import { TextField, Button, Grid, Container, InputAdornment, FormControl, InputLabel, OutlinedInput, IconButton, Popover, Typography, Select, MenuItem, Autocomplete, Box } from '@mui/material';
 import Backdrop from '@mui/material/Backdrop';
@@ -47,7 +47,7 @@ const AddUser = () => {
   useEffect(() => {
     getUserRolesArray();
     if(sessionStorage.length > 0){
-      const sessionToken:string = sessionStorage.getItem(localTokenKeyName);
+      const sessionToken:string = sessionStorage.getItem(localAdminTokenKeyName);
       setToken(sessionToken);
     }
   }, [])
