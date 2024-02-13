@@ -6,7 +6,7 @@ import { commercialAdvisorRoutes } from '../../constants/routes';
 import Swal from 'sweetalert2';
 import ViewProjects from '../../components/commercialAdvisor/ViewProjects';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { IUserApiData } from '../../components/Interfaces';
+import { ICommercialAdvisor, IUserApiData } from '../../components/Interfaces';
 import { Logout } from '@mui/icons-material';
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
@@ -27,19 +27,19 @@ const AsesorDashboard = () => {
   const navigate = useNavigate();
   const commercial = "Cotizaciones";
   const pages = [
-      {
-        name: commercial,
-        path: `${commercialAdvisorRoutes.quotes}`,
-        items: [
-          {
-            name: "Agregar",
-            path: ``,
-          },
-        ]
-      }
+    {
+      name: commercial,
+      path: `${commercialAdvisorRoutes.quotes}`,
+      items: [
+        {
+          name: "Agregar",
+          path: ``,
+        },
+      ]
+    }
   ];
   const [waiting, setWaiting] = useState(true);
-  const [userInfo, setUserInfo] = useState<IUserApiData>(null);
+  const [userInfo, setUserInfo] = useState<ICommercialAdvisor>(null);
   const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
   const [activeSubMenu, setActiveSubMenu] = useState(null);
@@ -367,7 +367,7 @@ const AsesorDashboard = () => {
         </AppBar>
       </ThemeProvider>
       {window.location.pathname === `/${commercialAdvisorRoutes.root}` ?
-        <ViewProjects/>
+        <ViewProjects commercialProjects={userInfo.proyectosAsesor}/>
         :
         <Outlet/>
       }

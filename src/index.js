@@ -27,6 +27,7 @@ import AddRegional from './components/admin/AddRegional.tsx';
 import AdminProfile from './components/admin/AdminProfile.tsx';
 import CommercialAdvisorProfile from './components/commercialAdvisor/CommercialAdvisorProfile.tsx';
 import Quotes from './components/commercialAdvisor/Quotes.tsx';
+import CreateProject from './components/CreateProject.tsx';
 
 const routes = createBrowserRouter([
   {
@@ -97,6 +98,10 @@ const routes = createBrowserRouter([
             {
               path: commercialAdvisorRoutes.quotes,
               element: <Quotes/>
+            },
+            {
+              path: commercialAdvisorRoutes.createProject,
+              element: <CreateProject/>
             }
           ]
         },

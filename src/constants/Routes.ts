@@ -15,7 +15,8 @@ export const adminProfilePath = "profile";
 export const commercialAdvisorRoutes = {
   root: "comercial",
   profile: "profile",
-  quotes: "cotizaciones"
+  quotes: "cotizaciones",
+  createProject: "crear-proyecto"
 };
 
 export const regionalDirectorRoutes = {
