@@ -72,7 +72,7 @@ export interface ICommercialAdvisor{
   id?:number;
   nombres?: string;
   apellidos?: string;
-  email: string;
+  email?: string;
   telefono?: string;
   regional?: IRegionalApiData;
   proyectosAsesor?: IProject[];
@@ -107,11 +107,12 @@ export interface IConstructor {
 export interface IProject{
   id?: number;
   nombreProyecto: string;
+  tipoProyecto: "RETIE"|"RETILAP"|"";
   numeroProforma?: string;
   numeroCotizacion?: string;
   numeroInspeccion?: string;
   alcance?: string;
-  estadoProyecto: "aprobado" | "abierto" | "cerrado";
+  estadoProyecto: "APROBADO"|"DOCUMENTACION_INICIAL"|"DOCUMENTACION_INICIAL_APROBADA"|"EN_PROGRAMACION"|"PROGRAMADO"|"INSPECTOR"|"APROBADO_INSPECTOR"|"RECHAZADO_INSPECTOR"|"ANALISTA_TECNICO"|"APROBADO_AREA_TECNICA"|"RECHAZADO_AREA_TECNICA"|"EN_EMISION"|"ABIERTO"|"CERRADO";
   direccionProyecto: string;
   visitasCotizadas: number;
   visitasRealizadas?: number;
@@ -119,6 +120,6 @@ export interface IProject{
   cliente?: ICustomer;
   constructores?: IConstructor[];
   calendarioProyectos?: ICalendar[];
-  actasProyecto:any;
+  actasProyecto?:any;
   fechaCierreProyecto?: Date;
 }

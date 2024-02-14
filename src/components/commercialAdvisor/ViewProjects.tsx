@@ -21,7 +21,7 @@ const ViewProjects = (props:{commercialProjects:IProject[]}) => {
       setLoadingProjects(true);
       const jwtToken = localStorage.getItem(localUserTokenKeyName);
       try {
-        const projectsResponse = await sendGet(`${API_GESTION_INSPECCIONES_URL}/${PROJECTS}`, jwtToken);
+        const projectsResponse = await sendGet(`${API_GESTION_INSPECCIONES_URL}/${PROJECTS}/preview`, jwtToken);
         setLoadingProjects(false);
 
         if(projectsResponse && projectsResponse.status === 200 && projectsResponse.data)
