@@ -6,9 +6,12 @@ export const localUserIdKeyName = "UserId";
 export const localUserRolKeyName = "userRol";
 
 export const apiUserRoles = {
+    admin: "ADMIN",
+    inspector: "INSPECTOR",
     asesorComercial:"ASESOR_COMERCIAL",
     directorRegional:"DIRECTOR_REGIONAL",
     directorTecnico: "DIRECTOR_TECNICO",
-    inspector: "INSPECTOR",
-    programadorAgenda: "PROGRAMADOR_AGENDA"
+    programadorAgenda: "PROGRAMADOR_AGENDA",
+    cliente: "CLIENTE",
+    constructor: "CONSTRUCTOR"
 }

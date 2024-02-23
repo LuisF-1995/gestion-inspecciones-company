@@ -16,7 +16,11 @@ export const commercialAdvisorRoutes = {
   root: "comercial",
   profile: "profile",
   quotes: "cotizaciones",
-  createProject: "crear-proyecto"
+  createProject: "crear-proyecto",
+  clients: {
+    root:"clientes",
+    create: "crear-cliente"
+  }
 };
 
 export const regionalDirectorRoutes = {

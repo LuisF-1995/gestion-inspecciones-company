@@ -83,7 +83,8 @@ export interface ICustomer {
   id?: number;
   nombre?: string;
   telefono?: string;
-  email: string;
+  email?: string;
+  password?: string;
   proyectosCliente?: IProject[];
   rol?: string;
 }

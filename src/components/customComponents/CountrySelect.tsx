@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
-import { COUNTRIES, CountryType } from '../constants/WorldCountries';
+import { COUNTRIES, CountryType } from '../../constants/WorldCountries';
 
 export default function CountrySelect(props:{onChange:any, required:boolean, margin?:string|number}) {
     const [selectedCountry, setSelectedCountry] = useState(null);

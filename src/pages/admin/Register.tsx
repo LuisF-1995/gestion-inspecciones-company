@@ -8,7 +8,7 @@ import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import Swal from 'sweetalert2';
 import { NavLink, useNavigate } from 'react-router-dom';
-import CountrySelect from '../../components/CountrySelect';
+import CountrySelect from '../../components/customComponents/CountrySelect';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 
 const AdminRegister = () => {

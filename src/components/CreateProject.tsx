@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
-import { Alert, Box, Button, CircularProgress, Container, FormControl, Grid, IconButton, InputLabel, MenuItem, Select, TextField } from '@mui/material';
-import { IProject } from './Interfaces';
+import React, { useEffect, useState } from 'react';
+import { Autocomplete, Box, Button, CircularProgress, Container, FormControl, Grid, InputLabel, MenuItem, Select, TextField } from '@mui/material';
+import { ICustomer, IProject } from './Interfaces';
 import { localUserIdKeyName, localUserTokenKeyName } from '../constants/globalConstants';
-import { sendPost } from '../services/apiRequests';
-import { API_GESTION_INSPECCIONES_URL, PROJECTS } from '../constants/apis';
+import { sendGet, sendPost } from '../services/apiRequests';
+import { API_GESTION_INSPECCIONES_URL, CUSTOMERS, PROJECTS } from '../constants/apis';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import { green, red } from '@mui/material/colors';
 import AddchartRoundedIcon from '@mui/icons-material/AddchartRounded';
-import CloseIcon from '@mui/icons-material/Close';
-import CustomSnackbar from './CustomSnackbar';
+import CustomSnackbar from './customComponents/CustomSnackbar';
 
 const CreateProject = () => {
   const navigate = useNavigate();
@@ -20,7 +19,8 @@ const CreateProject = () => {
     visitasCotizadas: 0,
     estadoProyecto: "APROBADO",
     asesorComercial: {id: parseInt(localStorage.getItem(localUserIdKeyName))},
-    tipoProyecto: ""
+    tipoProyecto: "",
+    cliente:null
   });
   const [savingDataInfo, setSavingDataInfo] = useState<{saving:boolean, success?:boolean, info?:string, openNotification:boolean}>({
     saving: false,
@@ -28,7 +28,75 @@ const CreateProject = () => {
     info: "",
     openNotification: false
   });
+  const [customersOpt, setCustomersOpt] = useState<ICustomer[]>([]);
+  const [openCustomersSelector, setOpenCustomersSelector] = useState(false);
+  const loadingCustomers = openCustomersSelector && customersOpt.length === 0;
 
+  useEffect(() => {
+    if (!loadingCustomers) {
+      return undefined;
+    }
+
+    (async () => {
+      await getAllClients();
+    })();
+
+  }, [loadingCustomers]);
+
+  const getAllClients =async () => {
+    if(localStorage.length > 0){
+      const jwtToken = localStorage.getItem(localUserTokenKeyName);
+      try {
+        const customersResponse = await sendGet(`${API_GESTION_INSPECCIONES_URL}/${CUSTOMERS}/all`, jwtToken);
+
+        if(customersResponse && customersResponse.status === 200 && customersResponse.data)
+          setCustomersOpt(customersResponse.data);
+        else{
+          Swal.fire({
+            title: 'Expiró la sesión',
+            text: `La sesión expiró, debe volver a iniciar sesión`,
+            icon: 'info',
+            confirmButtonText: "Iniciar sesión"
+          })
+          .then(option => {
+            localStorage.clear();
+            if(option.isConfirmed){
+              Swal.close();
+              navigate(`../../`);
+            }
+            else
+              setTimeout(() => {
+                Swal.close();
+                navigate(`../../`);
+              }, 5000);
+          })
+        }
+      } 
+      catch (error) {
+        localStorage.clear();
+      }
+    }
+    else{
+      Swal.fire({
+        title: 'Expiró la sesión',
+        text: `La sesión expiró, debe volver a iniciar sesión`,
+        icon: 'info',
+        confirmButtonText: "Iniciar sesión"
+      })
+      .then(option => {
+        if(option.isConfirmed){
+          Swal.close();
+          navigate(`../../`);
+        }
+        else
+          setTimeout(() => {
+            Swal.close();
+            navigate(`../../`);
+          }, 5000);
+      })
+    }
+  }
+  
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const name = event.target.name;
     const value = event.target.value;
@@ -60,7 +128,8 @@ const CreateProject = () => {
               visitasCotizadas: 0,
               estadoProyecto: "APROBADO",
               asesorComercial: {id: parseInt(localStorage.getItem(localUserIdKeyName))},
-              tipoProyecto: ""
+              tipoProyecto: "",
+              cliente: null
             }
           );
         }
@@ -170,6 +239,49 @@ const CreateProject = () => {
               onChange={handleChange}
               required
               disabled={savingDataInfo.saving}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={6} lg={4} xl={4}>
+            <Autocomplete
+              disabled={savingDataInfo.saving}
+              fullWidth
+              open={openCustomersSelector}
+              onOpen={() => {setOpenCustomersSelector(true);}}
+              onClose={() => {setOpenCustomersSelector(false);}}
+              value={projectData && projectData.cliente}
+              onChange={(event: any, newValue:ICustomer|null) => {
+                setProjectData({
+                  ...projectData,
+                  cliente: newValue
+                });
+              }}
+              id="set-customer"
+              autoHighlight
+              options={customersOpt.length > 0 ? customersOpt.sort((a, b) => -b.nombre.localeCompare(a.nombre)) : []}
+              getOptionLabel={(option) => option && option.nombre}
+              renderOption={(props, option) => (
+                <Box key={option.id} component="li" {...props}>
+                  {option.nombre}
+                </Box>
+              )}
+              loading={loadingCustomers}
+              renderInput={(params) => 
+                <TextField 
+                  {...params}
+                  margin='normal'
+                  required 
+                  label="Cliente"
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <React.Fragment>
+                        {loadingCustomers ? <CircularProgress color="inherit" size={20} /> : null}
+                        {params.InputProps.endAdornment}
+                      </React.Fragment>
+                    ),
+                  }}
+                />
+              }
             />
           </Grid>
           <Grid item xs={12} sm={6} md={6} lg={4} xl={4}>

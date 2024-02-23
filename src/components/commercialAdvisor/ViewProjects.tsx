@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { API_GESTION_INSPECCIONES_URL, PROJECTS } from '../../constants/apis';
 import { useNavigate } from 'react-router-dom';
-import { IProject, IProjectPreview } from '../Interfaces';
+import { IProjectPreview } from '../Interfaces';
 import { sendGet } from '../../services/apiRequests';
 import { localUserTokenKeyName } from '../../constants/globalConstants';
 import Swal from 'sweetalert2';
 import { Box, Button, Container, FormControlLabel, Grid, Paper, Skeleton, ThemeProvider, Typography, createTheme, styled } from '@mui/material';
-import { IOSSwitch } from '../CustomSwitch';
+import { IOSSwitch } from '../customComponents/CustomSwitch';
 import { commercialAdvisorRoutes } from '../../constants/routes';
-import CircularProgressWithLabel from '../CircularProgressWithLabel';
+import CircularProgressWithLabel from '../customComponents/CircularProgressWithLabel';
 
 const darkTheme = createTheme({
   palette: {

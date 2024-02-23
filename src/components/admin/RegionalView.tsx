@@ -6,7 +6,7 @@ import { localAdminTokenKeyName } from '../../constants/globalConstants';
 import { adminLoginPath } from '../../constants/routes';
 import { API_GESTION_INSPECCIONES_URL, REGIONALS } from '../../constants/apis';
 import { sendGet, sendPut } from '../../services/apiRequests';
-import CustomSnackbar from '../CustomSnackbar';
+import CustomSnackbar from '../customComponents/CustomSnackbar';
 import Swal from 'sweetalert2';
 import { green, red } from '@mui/material/colors';
 import { Backdrop, Box, Button, Card, CardActions, CardContent, CircularProgress, Container, Divider, Fab, Grid, IconButton, List, ListItem, ListItemText, Paper, TextField, ThemeProvider, Tooltip, Typography, Zoom, createTheme, styled } from '@mui/material';

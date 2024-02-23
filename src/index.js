@@ -28,6 +28,8 @@ import AdminProfile from './components/admin/AdminProfile.tsx';
 import CommercialAdvisorProfile from './components/commercialAdvisor/CommercialAdvisorProfile.tsx';
 import Quotes from './components/commercialAdvisor/Quotes.tsx';
 import CreateProject from './components/CreateProject.tsx';
+import ViewClients from './components/commercialAdvisor/ViewClients.tsx';
+import CreateClient from './components/CreateClient.tsx';
 
 const routes = createBrowserRouter([
   {
@@ -102,6 +104,14 @@ const routes = createBrowserRouter([
             {
               path: commercialAdvisorRoutes.createProject,
               element: <CreateProject/>
+            },
+            {
+              path: commercialAdvisorRoutes.clients.root,
+              element: <ViewClients/>
+            },
+            {
+              path: commercialAdvisorRoutes.clients.create,
+              element: <CreateClient/>
             }
           ]
         },

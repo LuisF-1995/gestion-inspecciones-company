@@ -12,7 +12,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import { AppBar, Avatar, Backdrop, Badge, Box, CircularProgress, Divider, IconButton, ListItemIcon, Menu, MenuItem, ThemeProvider, Toolbar, Tooltip, Typography, createTheme } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import { MaterialUISwitch } from '../../components/CustomSwitch';
+import { MaterialUISwitch } from '../../components/customComponents/CustomSwitch';
 
 const darkTheme = createTheme({
   palette: {
@@ -33,10 +33,26 @@ const lightTheme = createTheme({
 
 const AsesorDashboard = () => {
   const navigate = useNavigate();
-  const commercial = "Cotizaciones";
+  const commercialNav = "Cotizaciones";
+  const clientsNav = "Clientes";
+  const projectsNav = "Proyectos";
   const pages = [
     {
-      name: commercial,
+      name: clientsNav,
+      path: `${commercialAdvisorRoutes.clients.root}`,
+      items: [
+        {
+          name: "Ver",
+          path: `${commercialAdvisorRoutes.clients.root}`
+        },
+        {
+          name: `Agregar`,
+          path: `${commercialAdvisorRoutes.clients.create}`
+        }
+      ]
+    },
+    {
+      name: commercialNav,
       path: `${commercialAdvisorRoutes.quotes}`,
       items: [
         {
@@ -115,6 +131,35 @@ const AsesorDashboard = () => {
       })
     }
   }, [])
+
+  useEffect(() => {
+    if(window.location.pathname === `/${commercialAdvisorRoutes.root}`){
+      if(localStorage.length > 0){
+        getUserInfo();
+      }
+      else{
+        setWaiting(false);
+        Swal.fire({
+          title: 'Expiró la sesión',
+          text: `La sesión expiró, debe volver a iniciar sesión`,
+          icon: 'info',
+          confirmButtonText: "Iniciar sesión"
+        })
+        .then(option => {
+          if(option.isConfirmed){
+            Swal.close();
+            navigate(`../`);
+          }
+          else
+            setTimeout(() => {
+              Swal.close();
+              navigate(`../`);
+            }, 5000);
+        })
+      }
+    }
+  }, [window.location.pathname])
+  
   
   const getUserInfo = async() => {
     const userId = localStorage.getItem(localUserIdKeyName);
@@ -323,10 +368,13 @@ const AsesorDashboard = () => {
             </Menu>
             {/* ========================================================= */}
 
+            {/* ===============> Swith theme section <============================================== */}
             <Box sx={{ display: { xs: 'flex', md: 'flex' }, paddingRight:2}} >
               <MaterialUISwitch onChange={changeTheme} theme={pageDarkTheme ? darkTheme : lightTheme}/>
             </Box>
+            {/* ==================================================================================== */}
 
+            {/* =============================================> My Account section <============================================================= */}
             <Box sx={{ flexGrow: 0 }}>
               <Tooltip title="Mi cuenta">
                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
@@ -380,6 +428,7 @@ const AsesorDashboard = () => {
                 </MenuItem>
               </Menu>
             </Box>
+            {/* =============================================================================================================================== */}
           </Toolbar>
         </AppBar>
       </ThemeProvider>
