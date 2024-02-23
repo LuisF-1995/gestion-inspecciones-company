@@ -12,6 +12,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import { AppBar, Avatar, Backdrop, Badge, Box, CircularProgress, Divider, IconButton, ListItemIcon, Menu, MenuItem, ThemeProvider, Toolbar, Tooltip, Typography, createTheme } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
+import { MaterialUISwitch } from '../../components/CustomSwitch';
 
 const darkTheme = createTheme({
   palette: {
@@ -21,7 +22,14 @@ const darkTheme = createTheme({
     },
   },
 });
-
+const lightTheme = createTheme({
+  palette: {
+    mode:'light',
+    primary: {
+      main: '#1976d2',
+    },
+  },
+});
 
 const AsesorDashboard = () => {
   const navigate = useNavigate();
@@ -46,6 +54,7 @@ const AsesorDashboard = () => {
   const [anchorElNotifications, setAnchorElNotifications] = useState(null);
   const openNotifications = Boolean(anchorElNotifications);
   const [notifications, setNotifications] = useState<string[]>([]);
+  const [pageDarkTheme, setPageDarkTheme] = useState<boolean>(true);
 
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -146,10 +155,14 @@ const AsesorDashboard = () => {
     }
   }
 
+  const changeTheme = () => {
+    setPageDarkTheme(!pageDarkTheme);
+  }
+
   return (
     userInfo ?
     <main>
-      <ThemeProvider theme={darkTheme}>
+      <ThemeProvider theme={pageDarkTheme ? darkTheme : lightTheme}>
         <AppBar position="static" color='primary'>
           <Toolbar style={{minHeight:"50px !important"}}>
             <NavLink to={""}>
@@ -310,6 +323,10 @@ const AsesorDashboard = () => {
             </Menu>
             {/* ========================================================= */}
 
+            <Box sx={{ display: { xs: 'flex', md: 'flex' }, paddingRight:2}} >
+              <MaterialUISwitch onChange={changeTheme} theme={pageDarkTheme ? darkTheme : lightTheme}/>
+            </Box>
+
             <Box sx={{ flexGrow: 0 }}>
               <Tooltip title="Mi cuenta">
                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
@@ -367,7 +384,7 @@ const AsesorDashboard = () => {
         </AppBar>
       </ThemeProvider>
       {window.location.pathname === `/${commercialAdvisorRoutes.root}` ?
-        <ViewProjects commercialProjects={userInfo.proyectosAsesor}/>
+        <ViewProjects commercialProjects={userInfo.proyectosAsesor} pageDarkTheme={pageDarkTheme}/>
         :
         <Outlet/>
       }

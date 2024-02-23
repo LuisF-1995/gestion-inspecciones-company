@@ -153,6 +153,7 @@ const AddUser = () => {
         const dirTecnicoResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/${TECHNICAL_DIRECTORS}/register`, body, token);
         return dirTecnicoResponse;
       case apiUserRoles.programadorAgenda:
+        delete body.regional;
         const programadorAgendaResponse = await sendPost(`${API_GESTION_INSPECCIONES_URL}/${SCHEDULE_PROGRAMMERS}/register`, body, token);
         return programadorAgendaResponse;
         
@@ -229,48 +230,50 @@ const AddUser = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6} md={6} lg={4} xl={4}>
-              <Autocomplete
-                fullWidth
-                open={openRegionalsSelector}
-                onOpen={() => {setOpenRegionalsSelector(true);}}
-                onClose={() => {setOpenRegionalsSelector(false);}}
-                value={userData.regional}
-                onChange={(event: any, newValue:{ciudad:string; id:number}|null) => {
-                  setUserData({
-                    ...userData,
-                    regional: newValue && newValue.id ? newValue.id : undefined
-                  });
-                }}
-                id="set-regional"
-                autoHighlight
-                options={regionalsOpt}
-                getOptionLabel={(option) => option && option.ciudad}
-                renderOption={(props, option) => (
-                  <Box key={option.id} component="li" {...props}>
-                    {option.ciudad}
-                  </Box>
-                )}
-                loading={loadingRegionals}
-                renderInput={(params) => 
-                  <TextField 
-                    {...params}
-                    margin='normal'
-                    required 
-                    label="Regional" 
-                    InputProps={{
-                      ...params.InputProps,
-                      endAdornment: (
-                        <React.Fragment>
-                          {loadingRegionals ? <CircularProgress color="inherit" size={20} /> : null}
-                          {params.InputProps.endAdornment}
-                        </React.Fragment>
-                      ),
-                    }}
-                  />
-                }
-              />
-            </Grid>
+            {userData.rol !== apiUserRoles.programadorAgenda &&
+              <Grid item xs={12} sm={6} md={6} lg={4} xl={4}>
+                <Autocomplete
+                  fullWidth
+                  open={openRegionalsSelector}
+                  onOpen={() => {setOpenRegionalsSelector(true);}}
+                  onClose={() => {setOpenRegionalsSelector(false);}}
+                  value={userData.regional}
+                  onChange={(event: any, newValue:{ciudad:string; id:number}|null) => {
+                    setUserData({
+                      ...userData,
+                      regional: newValue && newValue.id ? newValue.id : undefined
+                    });
+                  }}
+                  id="set-regional"
+                  autoHighlight
+                  options={regionalsOpt}
+                  getOptionLabel={(option) => option && option.ciudad}
+                  renderOption={(props, option) => (
+                    <Box key={option.id} component="li" {...props}>
+                      {option.ciudad}
+                    </Box>
+                  )}
+                  loading={loadingRegionals}
+                  renderInput={(params) => 
+                    <TextField 
+                      {...params}
+                      margin='normal'
+                      required 
+                      label="Regional" 
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <React.Fragment>
+                            {loadingRegionals ? <CircularProgress color="inherit" size={20} /> : null}
+                            {params.InputProps.endAdornment}
+                          </React.Fragment>
+                        ),
+                      }}
+                    />
+                  }
+                />
+              </Grid>
+            }
             <Grid item xs={12} sm={6} md={6} lg={4} xl={4}>
               <FormControl variant="outlined" margin='normal' fullWidth required>
                 <InputLabel htmlFor="password">Password</InputLabel>

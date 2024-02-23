@@ -24,6 +24,15 @@ const darkTheme = createTheme({
   },
 });
 
+const lightTheme = createTheme({
+  palette: {
+    mode:'light',
+    primary: {
+      main: '#1976d2',
+    },
+  },
+});
+
 
 const RegionalView = (props:{regionalId:string|number}) => {
   const navigate = useNavigate();

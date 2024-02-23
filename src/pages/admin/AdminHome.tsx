@@ -19,6 +19,14 @@ const darkTheme = createTheme({
     },
   },
 });
+const lightTheme = createTheme({
+  palette: {
+    mode:'light',
+    primary: {
+      main: '#1976d2',
+    },
+  },
+});
 
 const AdminHome = () => {
   const navigate = useNavigate();

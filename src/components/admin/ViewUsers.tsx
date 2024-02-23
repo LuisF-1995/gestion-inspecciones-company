@@ -41,6 +41,14 @@ const darkTheme = createTheme({
     },
   },
 });
+const lightTheme = createTheme({
+  palette: {
+    mode:'light',
+    primary: {
+      main: '#1976d2',
+    },
+  },
+});
 
 const modalStyle = {
   position: 'absolute' as 'absolute',

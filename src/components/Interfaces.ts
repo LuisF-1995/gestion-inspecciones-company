@@ -104,6 +104,18 @@ export interface IConstructor {
   rol?: string;
 }
 
+export interface IProjectPreview{
+  id?: number;
+  nombreProyecto: string;
+  tipoProyecto: "RETIE"|"RETILAP"|"";
+  numeroCotizacion?: string;
+  numeroInspeccion?: string;
+  estadoProyecto: "APROBADO"|"DOCUMENTACION_INICIAL"|"DOCUMENTACION_INICIAL_APROBADA"|"EN_PROGRAMACION"|"PROGRAMADO"|"INSPECTOR"|"APROBADO_INSPECTOR"|"RECHAZADO_INSPECTOR"|"ANALISTA_TECNICO"|"APROBADO_AREA_TECNICA"|"RECHAZADO_AREA_TECNICA"|"EN_EMISION"|"ABIERTO"|"CERRADO";
+  visitasCotizadas: number;
+  visitasRealizadas?: number;
+  cliente?: ICustomer;
+}
+
 export interface IProject{
   id?: number;
   nombreProyecto: string;
